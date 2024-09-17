@@ -1,3 +1,4 @@
+#include <EEPROM.h>
 
 int menu=0;//0-def; 1-speedLow; 2-speedMid; 3-speedHigh; 4-wellcome; 5-ventilationMemory; 6-windshieldMemory
 bool isMenuEdit=false;
@@ -8,12 +9,12 @@ struct Memory{
   int lowSpeed=10;
   int midSpeed=8;
   int highSpeed=6;
-  int wellcomeState;
-  int ventilationStateMemory;
-  int ventilationState1;
-  int ventilationState2;
-  int windshieldStateMemory;
-  int windshieldState;
+  int wellcomeState=1;
+  int ventilationStateMemory=1;
+  int ventilationState1=1;
+  int ventilationState2=2;
+  int windshieldStateMemory=0;
+  int windshieldState=0;
 } memory;
 
 struct Seat{
@@ -27,8 +28,8 @@ struct Seat{
 };
 
 struct FanSpeeds{
-  int low=155;
-  int mid=175;
+  int low=105;
+  int mid=155;
   int high=195;
 } fanSpeeds;
 
@@ -46,16 +47,17 @@ struct WheelHeat{
 
 void setup()
 {
+  delay(2000);
   Serial.begin(9600);
 
   seat1.btnPin=A0;
-  seat1.fanPwmPin=4;
+  seat1.fanPwmPin=5;
   seat1.lowLed=6;
   seat1.midLed=7;
   seat1.highLed=8;
 
   seat2.btnPin=A1;
-  seat2.fanPwmPin=5;
+  seat2.fanPwmPin=9;
   seat2.lowLed=10;
   seat2.midLed=11;
   seat2.highLed=12;
@@ -72,24 +74,39 @@ void setup()
   pinMode(seat2.midLed, OUTPUT);
   pinMode(seat2.highLed, OUTPUT);
 
-  //read memory
-  wellcome();
+  EEPROM.get(0, memory);
+  if(memory.lowSpeed==255)
+  {
+    Memory newMemory;
+    EEPROM.put(0, newMemory);
+    Serial.println("new memory");
+  }
+
+  Serial.println(memory.lowSpeed);
+  Serial.println(memory.midSpeed);
+  Serial.println(memory.highSpeed);
+
+  if(memory.wellcomeState==1)
+    wellcome();
+    
+  if(memory.ventilationStateMemory)
+  {
+    seat1.mode=memory.ventilationState1;
+    seat2.mode=memory.ventilationState2;
+    setVentilation(seat1);
+    setVentilation(seat2);
+  }
 }
 
 void loop()
 {
   int event1=getBtnEvent(&seat1);
-  if(event1!=0)
-  {
-    Serial.println(event1);
-  }
   int event2=getBtnEvent(&seat2);
   if(menu==0)
   {
     if(event1==-1)
     {
       nextMode(&seat1);
-      Serial.println(seat1.mode);
     }
     if(event2==-1)
     {
@@ -117,7 +134,7 @@ void loop()
       isMenuEdit=true;
       editValue=getValue(menu);
     }
-    setBar(menu*2);
+    setBar(menu*2-1);
 
     //exit to def
     if(event2==2)
@@ -138,10 +155,19 @@ void loop()
     {
       editValue=clamp(++editValue, 0, menu<4?12:1);
     }
+    if(menu<4)
+    {
+      setEditFan(menu, editValue);
+    }
+
     if(event1==2)
     {
       isMenuEdit=false;
       saveValue(menu);
+    }
+    if(event2==2)
+    {
+      isMenuEdit=false;
     }
     setBar(editValue);
   }
@@ -193,6 +219,7 @@ void nextMode(Seat* seat)
   if(seat->mode>3)
     seat->mode=0;
   setVentilation(*seat);
+  memoryMode(seat);
 }
 
 void setVentilation(Seat seat)
@@ -217,17 +244,37 @@ void setFan(Seat seat)
   }
   else if(seat.mode==1)
   {
-    speed=fanSpeeds.low+50*memory.lowSpeed;
+    speed=fanSpeeds.low+5*memory.lowSpeed;
   }
   else if(seat.mode==2)
   {
-    speed=fanSpeeds.mid+50*memory.midSpeed;
+    speed=fanSpeeds.mid+5*memory.midSpeed;
   }
   else if(seat.mode==3)
   {
-    speed=fanSpeeds.high+50*memory.highSpeed;
+    speed=fanSpeeds.high+5*memory.highSpeed;
   }
   analogWrite(seat.fanPwmPin, speed);
+}
+
+void setEditFan(int mode, int editValue)
+{
+  int speed=0;
+  if(mode==1)
+  {
+    speed=fanSpeeds.low+5*editValue;
+  }
+  else if(mode==2)
+  {
+    speed=fanSpeeds.mid+5*editValue;
+  }
+  else if(mode==3)
+  {
+    speed=fanSpeeds.high+5*editValue;
+  }
+  Serial.println(speed);
+  analogWrite(seat1.fanPwmPin, speed);
+  analogWrite(seat2.fanPwmPin, speed);
 }
 
 //0-12; Each odd value gets blinking
@@ -307,8 +354,19 @@ void saveValue(int menu)
   if(menu==6)
     memory.windshieldStateMemory=editValue;
 
-  //saveToEEPROM
+  EEPROM.put(0, memory);
 
   setVentilation(seat1);
   setVentilation(seat2);
+}
+
+void memoryMode(Seat* seat)
+{
+  if(seat==&seat1)
+    memory.ventilationState1=seat->mode;
+  else if(seat==&seat2)
+    memory.ventilationState2=seat->mode;
+
+  if(memory.ventilationStateMemory==1)
+    EEPROM.put(0, memory);
 }
