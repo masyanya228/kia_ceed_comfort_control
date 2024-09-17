@@ -36,14 +36,16 @@ struct FanSpeeds{
 Seat seat1;
 Seat seat2;
 
-struct WheelHeat{
-  int heatBtn;
-  int led;
+struct Wheel{
+  int btn=A2;
+  int btnPressCounter=0;
+  int led=A3;
+  int ledMode=0;//0-idle; 1-light; 2-50-100 blind; 3-0-50 blind
   int wSignal;
   int wsSignal;
   int wIndicator;
   int wsIndicator;
-} wheelHeat;
+} wheel;
 
 void setup()
 {
@@ -74,6 +76,9 @@ void setup()
   pinMode(seat2.midLed, OUTPUT);
   pinMode(seat2.highLed, OUTPUT);
 
+  pinMode(wheel.btn, INPUT);
+  pinMode(wheel.led, OUTPUT);
+
   EEPROM.get(0, memory);
   if(memory.lowSpeed==255)
   {
@@ -102,6 +107,10 @@ void loop()
 {
   int event1=getBtnEvent(&seat1);
   int event2=getBtnEvent(&seat2);
+  int eventWheel=getBtnEvent(&wheel);//micro data
+  if(event1!=0) Serial.print(event1);
+  if(event2!=0) Serial.print(event2);
+  if(eventWheel!=0) Serial.print(eventWheel);
   if(menu==0)
   {
     if(event1==-1)
@@ -168,11 +177,78 @@ void loop()
     if(event2==2)
     {
       isMenuEdit=false;
+      setVentilation(seat1);
+      setVentilation(seat2);
     }
     setBar(editValue);
   }
 
-  
+  if(eventWheel==-1)
+  {
+    int wI=digitalRead(wheel.wIndicator);
+    int wsI=digitalRead(wheel.wsIndicator);
+    if(wI==LOW && wsI==LOW)
+    {
+      //руль
+      wheel.ledMode=1;
+    }
+    else if(wI==HIGH && wsI==LOW)
+    {
+      //выкл
+      wheel.ledMode=0;
+    }
+    else if(wI==LOW && wsI==HIGH)
+    {
+      //руль+стекло
+      wheel.ledMode=2;
+    }
+    else if(wI==HIGH && wsI==HIGH)
+    {
+      //стекло
+      wheel.ledMode=3;
+    }
+  }
+  else if(eventWheel==2)
+  {
+    int wI=digitalRead(wheel.wIndicator);
+    int wsI=digitalRead(wheel.wsIndicator);
+    if(wI==LOW && wsI==LOW)
+    {
+      //руль+стекло
+      wheel.ledMode=2;
+    }
+    else if(wI==HIGH && wsI==LOW)
+    {
+      //руль+стекло
+      wheel.ledMode=2;
+    }
+    else if(wI==LOW && wsI==HIGH)
+    {
+      //выкл
+      wheel.ledMode=0;
+    }
+    else if(wI==HIGH && wsI==HIGH)
+    {
+      //руль
+      wheel.ledMode=1;
+    }
+  }
+  if(wheel.ledMode==0)
+  {
+    analogWrite(wheel.led, 0);
+  }
+  else if(wheel.ledMode==1)
+  {
+    analogWrite(wheel.led, 255);
+  }
+  else if(wheel.ledMode==2)
+  {
+    analogWrite(wheel.led, 128+127/20*menuQuarz);
+  }
+  else if(wheel.ledMode==3)
+  {
+    analogWrite(wheel.led, 127/20*menuQuarz);
+  }
 
   //check menu explorer
   //check edit value
@@ -206,6 +282,38 @@ int getBtnEvent(Seat* seat)
   else if(seat->btnPressCounter>0)
   {
     seat->btnPressCounter=0;
+    return -1;
+  }
+  else{
+    return 0;
+  }
+}
+
+//0-idle; 1-down; 2-long; -1-up
+int getBtnEvent(Wheel* wheel)
+{
+  int pinValue=analogRead(wheel->btn);
+  if(pinValue<500)
+  {
+    wheel->btnPressCounter++;
+    if(wheel->btnPressCounter==30){
+      return 2;
+    }
+    else if(wheel->btnPressCounter==1){
+      return 1;
+    }
+    else{
+      return 0;
+    }
+  }
+  else if(wheel->btnPressCounter>=30)
+  {
+    wheel->btnPressCounter=0;
+    return 0;
+  }
+  else if(wheel->btnPressCounter>0)
+  {
+    wheel->btnPressCounter=0;
     return -1;
   }
   else{
@@ -299,19 +407,19 @@ void wellcome()
 
   digitalWrite(seat1.lowLed, HIGH);
   digitalWrite(seat2.lowLed, HIGH);
-  delay(100);
+  delay(50);
   digitalWrite(seat1.midLed, HIGH);
   digitalWrite(seat2.midLed, HIGH);
-  delay(70);
+  delay(150);
   digitalWrite(seat1.highLed, HIGH);
   digitalWrite(seat2.highLed, HIGH);
-  delay(50);
+  delay(200);
   digitalWrite(seat1.highLed, LOW);
   digitalWrite(seat2.highLed, LOW);
-  delay(70);
+  delay(150);
   digitalWrite(seat1.midLed, LOW);
   digitalWrite(seat2.midLed, LOW);
-  delay(100);
+  delay(50);
   digitalWrite(seat1.lowLed, LOW);
   digitalWrite(seat2.lowLed, LOW);
 }
