@@ -5,6 +5,8 @@ bool isMenuEdit=false;
 int editValue=0;
 int menuQuarz=0;
 
+bool emulateIndicators=true;
+
 struct Memory{
   int lowSpeed=10;
   int midSpeed=8;
@@ -13,8 +15,8 @@ struct Memory{
   int ventilationStateMemory=1;
   int ventilationState1=1;
   int ventilationState2=2;
-  int windshieldStateMemory=0;
-  int windshieldState=0;
+  int wsStateMemory=0;
+  int wsState=0;
 } memory;
 
 struct Seat{
@@ -40,7 +42,7 @@ struct Wheel{
   int btn=A2;
   int btnPressCounter=0;
   int led=A3;
-  int ledMode=0;//0-idle; 1-light; 2-50-100 blind; 3-0-50 blind
+  int ledMode=0;//0-idle; 1-w; 2-ws; 3-s
   int wSignal;
   int wsSignal;
   int wIndicator;
@@ -101,16 +103,21 @@ void setup()
     setVentilation(seat1);
     setVentilation(seat2);
   }
+
+  if(memory.wsStateMemory)
+  {
+    wheel.ledMode=memory.wsState;
+  }
 }
 
 void loop()
 {
   int event1=getBtnEvent(&seat1);
   int event2=getBtnEvent(&seat2);
-  int eventWheel=getBtnEvent(&wheel);//micro data
-  if(event1!=0) Serial.print(event1);
-  if(event2!=0) Serial.print(event2);
-  if(eventWheel!=0) Serial.print(eventWheel);
+  int eventWheel=getBtnEvent(&wheel);
+  if(event1!=0) Serial.println(event1);
+  if(event2!=0) Serial.println(event2);
+  if(eventWheel!=0) Serial.println(eventWheel);
   if(menu==0)
   {
     if(event1==-1)
@@ -185,8 +192,8 @@ void loop()
 
   if(eventWheel==-1)
   {
-    int wI=digitalRead(wheel.wIndicator);
-    int wsI=digitalRead(wheel.wsIndicator);
+    int wI=getWI();
+    int wsI=getWSI();
     if(wI==LOW && wsI==LOW)
     {
       //руль
@@ -207,11 +214,12 @@ void loop()
       //стекло
       wheel.ledMode=3;
     }
+    memoryMode(&wheel);
   }
   else if(eventWheel==2)
   {
-    int wI=digitalRead(wheel.wIndicator);
-    int wsI=digitalRead(wheel.wsIndicator);
+    int wI=getWI();
+    int wsI=getWSI();
     if(wI==LOW && wsI==LOW)
     {
       //руль+стекло
@@ -232,26 +240,10 @@ void loop()
       //руль
       wheel.ledMode=1;
     }
+    memoryMode(&wheel);
   }
-  if(wheel.ledMode==0)
-  {
-    analogWrite(wheel.led, 0);
-  }
-  else if(wheel.ledMode==1)
-  {
-    analogWrite(wheel.led, 255);
-  }
-  else if(wheel.ledMode==2)
-  {
-    analogWrite(wheel.led, 128+127/20*menuQuarz);
-  }
-  else if(wheel.ledMode==3)
-  {
-    analogWrite(wheel.led, 127/20*menuQuarz);
-  }
+  setWheelIndicator();
 
-  //check menu explorer
-  //check edit value
   menuQuarz++;
   if(menuQuarz>20) menuQuarz=0;
   delay(50);
@@ -319,6 +311,43 @@ int getBtnEvent(Wheel* wheel)
   else{
     return 0;
   }
+}
+
+void setWheelIndicator()
+{
+  int pwm=0;
+  if(wheel.ledMode==0)
+    pwm=0;
+  else if(wheel.ledMode==1)
+    pwm=getWheelPwm();
+  else if(wheel.ledMode==2)
+    pwm=255;
+  else if(wheel.ledMode==3)
+    pwm=menuQuarz>2?255:0;
+  
+  log("Led", wheel.ledMode, pwm);
+  analogWrite(wheel.led, pwm);
+}
+
+int getWheelPwm()
+{
+  if(menuQuarz>=0 & menuQuarz<=2 || menuQuarz>=7 & menuQuarz<=9)
+    return 255;
+  else return 0;
+}
+
+int getWI()
+{
+  return emulateIndicators
+    ? (int)(wheel.ledMode==1 || wheel.ledMode==2)
+    : digitalRead(wheel.wIndicator);
+}
+
+int getWSI()
+{
+  return emulateIndicators
+    ? (int)(wheel.ledMode==2 || wheel.ledMode==3)
+    : digitalRead(wheel.wsIndicator);
 }
 
 void nextMode(Seat* seat)
@@ -422,6 +451,7 @@ void wellcome()
   delay(50);
   digitalWrite(seat1.lowLed, LOW);
   digitalWrite(seat2.lowLed, LOW);
+  delay(200);
 }
 
 int clamp(int val, int min, int max)
@@ -442,7 +472,7 @@ int getValue(int menu)
   if(menu==5)
     return memory.ventilationStateMemory;
   if(menu==6)
-    return memory.windshieldStateMemory;
+    return memory.wsStateMemory;
 
   return 0; //imposible
 }
@@ -460,7 +490,7 @@ void saveValue(int menu)
   if(menu==5)
     memory.ventilationStateMemory=editValue;
   if(menu==6)
-    memory.windshieldStateMemory=editValue;
+    memory.wsStateMemory=editValue;
 
   EEPROM.put(0, memory);
 
@@ -477,4 +507,25 @@ void memoryMode(Seat* seat)
 
   if(memory.ventilationStateMemory==1)
     EEPROM.put(0, memory);
+}
+
+void memoryMode(Wheel* wheel)
+{
+  memory.wsState=wheel->ledMode;
+  if(memory.wsStateMemory==1)
+    EEPROM.put(0, memory);
+}
+
+void log(String msg, int val)
+{
+  Serial.print(msg+": ");
+  Serial.println(val);
+}
+
+void log(String msg, int val, int val2)
+{
+  Serial.print(msg+": ");
+  Serial.print(val);
+  Serial.print(", ");
+  Serial.println(val2);
 }
