@@ -138,9 +138,9 @@ void setup()
       err("Out of range wellcomeState", memory.wellcomeState);
   }
 
-  Serial.println(memory.lowSpeed);
-  Serial.println(memory.midSpeed);
-  Serial.println(memory.highSpeed);
+  log("FanLowSpeed", memory.lowSpeed, (fanSpeeds.low+5*memory.lowSpeed));
+  log("FanMidSpeed", memory.midSpeed, (fanSpeeds.mid+5*memory.midSpeed));
+  log("FanHighSpeed", memory.highSpeed, (fanSpeeds.high+5*memory.highSpeed));
 
   if(memory.wellcomeState==1)
     wellcome();
@@ -541,7 +541,7 @@ void setEditFan(int mode, int editValue)
   {
     speed=fanSpeeds.high+5*editValue;
   }
-  Serial.println(speed);
+  log("setEditFan", mode, speed);
   analogWrite(seat1.fanPwmPin, speed);
   analogWrite(seat2.fanPwmPin, speed);
 }
