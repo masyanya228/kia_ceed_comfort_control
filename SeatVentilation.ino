@@ -153,12 +153,12 @@ void setup()
     setVentilation(seat2);
   }
 
-  if(memory.wsStateMemory)
+  if(memory.wsStateMemory && memory.wsState==1)
   {
     wsClickBtn();
   }
 
-  if(memory.wStateMemory)
+  if(memory.wStateMemory && memory.wState==1)
   {
     wClickBtn();
   }
