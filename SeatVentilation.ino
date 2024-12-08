@@ -88,7 +88,7 @@ void setup()
 
 void loop()
 {
-  if(!autoOnExecuted && millis()>1000*5)
+  if(!autoOnExecuted && millis()>1000*15)
   {
     autoOnExecuted=true;
     AutoOn();
@@ -110,8 +110,13 @@ void loop()
     {
       nextMode(&seat2);
     }
-    if(event1==2)
+    if(event1==2 && event2==1)
     {
+      ShowTemp();
+    }
+    else if(event1==2)
+    {
+      BlinkBar(12, 1, 100);
       menu=1;
     }
   }
@@ -129,6 +134,7 @@ void loop()
     }
     if(event1==2)
     {
+      BlinkBar(12, 2, 100);
       isMenuEdit=true;
       editValue=getValue(menu);
     }
@@ -625,13 +631,18 @@ void memoryMode(Wheel* wheel)
 //Провести самодиагностику
 void selfTest()
 {
+  int prevVent1=seat1.mode;
+  int prevVent2=seat2.mode;
+  int prevW=getWI();
+  int prevWS=getWSI();
+
   seat1.mode=0;
   setVentilation(seat1);
   seat2.mode=0;
   setVentilation(seat2);
-  if(getWI())
+  if(prevW)
     wClickBtn();
-  if(getWSI())
+  if(prevWS)
     wsClickBtn();
   
   BlinkBar(12, 3, 1000);
@@ -644,6 +655,7 @@ void selfTest()
     setWheelIndicator(255);
     delay(2000);
     setWheelIndicator(0);
+    wClickBtn();
   }
   else
   {
@@ -674,6 +686,7 @@ void selfTest()
     setWheelIndicator(255);
     delay(2000);
     setWheelIndicator(0);
+    wsClickBtn();
   }
   else
   {
@@ -754,6 +767,18 @@ void selfTest()
   seat2.mode=3;
   setVentilation(seat2);
   delay(6000);
+  
+  ShowTemp();
+
+  //Set as before
+  seat1.mode=prevVent1;
+  setVentilation(seat1);
+  seat2.mode=prevVent2;
+  setVentilation(seat2);
+  if(prevW)
+    wClickBtn();
+  if(prevWS)
+    wsClickBtn();
 }
 
 //Показывает текущую температуру в полу салона
@@ -827,33 +852,31 @@ bool IsNeedWByTemp()
 //Управляет автоматическим включением вентиляции, обогрева руля и обогрева лобового стекла пи запуске авто.
 void AutoOn()
 {
-  if(IsNeedVentilationByTemp())
+  if(seat1.mode==0 && IsNeedVentilationByTemp())
   {
     seat1.mode=1;
     setVentilation(seat1);
   }
-  else if(memory.ventilationStateMemory)
+  else if(seat1.mode==0 && memory.ventilationStateMemory)
   {
     seat1.mode=memory.ventilationState1;
-    seat2.mode=memory.ventilationState2;
     setVentilation(seat1);
-    setVentilation(seat2);
   }
 
-  if(IsNeedWSByTemp())
+  if(!getWSI() && IsNeedWSByTemp())
   {
     wsClickBtn();
   }
-  else if(memory.wsStateMemory && memory.wsState==1)
+  else if(!getWSI() && memory.wsStateMemory && memory.wsState==1)
   {
     wsClickBtn();
   }
 
-  if(IsNeedWByTemp())
+  if(!getWI() && IsNeedWByTemp())
   {
     wClickBtn();
   }
-  else if(memory.wStateMemory && memory.wState==1)
+  else if(!getWI() && memory.wStateMemory && memory.wState==1)
   {
     wClickBtn();
   }
