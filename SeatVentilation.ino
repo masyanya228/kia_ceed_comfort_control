@@ -98,7 +98,7 @@ void setup()
   pinMode(wheel.wSignal, OUTPUT);
 
   EEPROM.get(0, memory);
-  if(memory.lowSpeed==255)
+  if(memory.lowSpeed==255 || memory.lowSpeed==-1)
   {
     Memory newMemory;
     EEPROM.put(0, newMemory);
