@@ -2,7 +2,7 @@
 #include <DHT_U.h>
 
 #include <EEPROM.h>
-#define DHT22_PIN 2
+#define DHT22_PIN 13
 
 const int menuQuartzMax=20;//1sec
 const int menu3QuartzMax=100;//5sec
@@ -886,13 +886,13 @@ void AutoOn()
 void SetupPins()
 {
   seat1.btnPin=A0;
-  seat1.fanPwmPin=5;
+  seat1.fanPwmPin=9;
   seat1.lowLed=8;
   seat1.midLed=7;
   seat1.highLed=6;
 
   seat2.btnPin=A1;
-  seat2.fanPwmPin=9;
+  seat2.fanPwmPin=5;
   seat2.lowLed=10;
   seat2.midLed=11;
   seat2.highLed=12;
