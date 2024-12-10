@@ -74,7 +74,7 @@ void setup()
   dht22.begin();
   delay(2000);
   Serial.begin(9600);
-
+  log("Temp", millis()/1000, GetTemp());
 
   ReadCheckMemory();
 
@@ -84,6 +84,15 @@ void setup()
 
   if(memory.wellcomeState==1)
     wellcome();
+
+  wClickBtn();
+  delay(2000);
+  wClickBtn();
+  delay(2000);
+  wClickBtn();
+  delay(2000);
+  wClickBtn();
+  delay(2000);
 }
 
 void loop()
@@ -404,16 +413,16 @@ void wswSwitch1(int eventWheel)
 
 void wClickBtn()
 {
-  digitalWrite(wheel.wSignal, HIGH);
-  delay(50);
   digitalWrite(wheel.wSignal, LOW);
+  delay(200);
+  digitalWrite(wheel.wSignal, HIGH);
 }
 
 void wsClickBtn()
 {
-  digitalWrite(wheel.wsSignal, HIGH);
-  delay(50);
   digitalWrite(wheel.wsSignal, LOW);
+  delay(200);
+  digitalWrite(wheel.wsSignal, HIGH);
 }
 
 void nextMode(Seat* seat)
@@ -915,6 +924,8 @@ void SetupPins()
   pinMode(wheel.wsIndicator, INPUT);
   pinMode(wheel.wSignal, OUTPUT);
   pinMode(wheel.wSignal, OUTPUT);
+  digitalWrite(wheel.wSignal, HIGH);
+  digitalWrite(wheel.wsSignal, HIGH);
 }
 
 //Считывает сохраннные настройки и проверяет данные на валидность
