@@ -85,14 +85,7 @@ void setup()
   if(memory.wellcomeState==1)
     wellcome();
 
-  wClickBtn();
-  delay(2000);
-  wClickBtn();
-  delay(2000);
-  wClickBtn();
-  delay(2000);
-  wClickBtn();
-  delay(2000);
+  wsClickBtn();
 }
 
 void loop()
@@ -209,7 +202,7 @@ int getBtnEvent(Seat* seat)
 {
   int pinValue=analogRead(seat->btnPin);
 
-  if(pinValue<900)
+  if(pinValue<500)
   {
     seat->btnPressCounter++;
     if(seat->btnPressCounter==30){
@@ -242,7 +235,7 @@ int getBtnEvent(Wheel* wheel)
 {
   int pinValue=analogRead(wheel->btn);
 
-  if(pinValue<900)
+  if(pinValue<500)
   {
     wheel->btnPressCounter++;
     if(wheel->btnPressCounter==30){
@@ -273,30 +266,30 @@ int getBtnEvent(Wheel* wheel)
 void setWheelIndicator()
 {
   //0-idle; 1-w; 2-ws; 3-s
-  int wI=getWI();
-  int wsI=getWSI();
-  if(wI == LOW)
-  {
-    wheel.ledMode = wsI==LOW
-      ? 0
-      : 3;
-  }
-  else
-  {
-    wheel.ledMode = wsI==LOW
-      ? 1
-      : 2;
-  }
+  // int wI=getWI();
+  // int wsI=getWSI();
+  // if(wI == LOW)
+  // {
+  //   wheel.ledMode = wsI==LOW
+  //     ? 0
+  //     : 3;
+  // }
+  // else
+  // {
+  //   wheel.ledMode = wsI==LOW
+  //     ? 1
+  //     : 2;
+  // }
 
   int pwm=0;
   if(wheel.ledMode==0)
     pwm=0;
   else if(wheel.ledMode==1)
-    pwm=255.0f / (menu3QuartzMax/2) * min(menu3QuartzMax/2, 0+abs(menu3Quarz-(menu3QuartzMax/2)));
+    pwm=255.0f;// / (menu3QuartzMax/2) * min(menu3QuartzMax/2, 0+abs(menu3Quarz-(menu3QuartzMax/2)));
   else if(wheel.ledMode==2)
     pwm=255;
   else if(wheel.ledMode==3)
-    pwm=255.0f / (menuQuartzMax/2) * min(menuQuartzMax/2, 0+abs(menuQuarz-(menuQuartzMax/2)));
+    pwm=255.0f;// / (menuQuartzMax/2) * min(menuQuartzMax/2, 0+abs(menuQuarz-(menuQuartzMax/2)));
   
   setWheelIndicator(pwm);
 }
@@ -309,14 +302,14 @@ void setWheelIndicator(int pwm)
 
 int getWI()
 {
-  return analogRead(wheel.wIndicator) > 500
+  return analogRead(wheel.wIndicator) > 300
     ? HIGH
     : LOW;
 }
 
 int getWSI()
 {
-  return analogRead(wheel.wsIndicator) > 500
+  return analogRead(wheel.wsIndicator) > 300
     ? HIGH
     : LOW;
 }
@@ -362,8 +355,12 @@ void wswSwitch1(int eventWheel)
   if(eventWheel==0 || eventWheel==1)
     return;
 
-  int wI=getWI();
-  int wsI=getWSI();
+  int wI=wheel.ledMode==1 || wheel.ledMode==2
+    ? 1
+    : 0;
+  int wsI=wheel.ledMode==3 || wheel.ledMode==2
+    ? 1
+    : 0;
   log("wswi1", wI, wsI);
 
   if(eventWheel==-1)
@@ -372,21 +369,25 @@ void wswSwitch1(int eventWheel)
     {
       //руль включить
       wClickBtn();
+      wheel.ledMode=1;
     }
     else if(wI==HIGH && wsI==LOW)
     {
       //стекло включить
       wsClickBtn();
+      wheel.ledMode=2;
     }
     else if(wI==HIGH && wsI==HIGH)
     {
       //руль выключить
       wClickBtn();
+      wheel.ledMode=3;
     }
     else if(wI==LOW && wsI==HIGH)
     {
       //стекло выключить
       wsClickBtn();
+      wheel.ledMode=0;
     }
   }
   else if(eventWheel==2)
