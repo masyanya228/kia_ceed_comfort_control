@@ -7,14 +7,18 @@
 const int menuQuartzMax=20;//1sec
 const int menu3QuartzMax=100;//5sec
 const int maxMenuItem=12;
+const int middle=6;
 
 int menu=0;//0-def; 1-speedLow; 2-speedMid; 3-speedHigh; 4-ventilationMemory; 5-wheelMemory; 6-windshieldMemory; 7-wswTypeOfSwitch; 8-autoVent; 9-autoWheel; 10-autoWindShield; 11-wellcome; 12-diagnostic
 bool isMenuEdit=false;
 int editValue=0;
-int menuQuarz=0;
-int menu3Quarz=0;
+int menuQuartz=0;
+int menu3Quartz=0;
 bool autoOnExecuted = false;
 DHT dht22(DHT22_PIN, DHT22);
+
+int wIndicator = 0;
+int wsIndicator = 0;
 
 struct Memory{
   int lowSpeed = 10;
@@ -84,13 +88,11 @@ void setup()
 
   if(memory.wellcomeState==1)
     wellcome();
-
-  wsClickBtn();
 }
 
 void loop()
 {
-  if(!autoOnExecuted && millis()>1000*15)
+  if(!autoOnExecuted && millis()>1000*5)
   {
     autoOnExecuted=true;
     AutoOn();
@@ -190,10 +192,10 @@ void loop()
   }
   setWheelIndicator();
 
-  menuQuarz++;
-  if(menuQuarz>menuQuartzMax) menuQuarz=0;
-  menu3Quarz++;
-  if(menu3Quarz>menu3QuartzMax) menu3Quarz=0;
+  menuQuartz++;
+  if(menuQuartz>menuQuartzMax) menuQuartz=0;
+  menu3Quartz++;
+  if(menu3Quartz>menu3QuartzMax) menu3Quartz=0;
   delay(50);
 }
 
@@ -266,31 +268,31 @@ int getBtnEvent(Wheel* wheel)
 void setWheelIndicator()
 {
   //0-idle; 1-w; 2-ws; 3-s
-  // int wI=getWI();
-  // int wsI=getWSI();
-  // if(wI == LOW)
-  // {
-  //   wheel.ledMode = wsI==LOW
-  //     ? 0
-  //     : 3;
-  // }
-  // else
-  // {
-  //   wheel.ledMode = wsI==LOW
-  //     ? 1
-  //     : 2;
-  // }
+  int wI=getWI();
+  int wsI=getWSI();
+  if(wI == LOW)
+  {
+    wheel.ledMode = wsI==LOW
+      ? 0
+      : 3;
+  }
+  else
+  {
+    wheel.ledMode = wsI==LOW
+      ? 1
+      : 2;
+  }
 
   int pwm=0;
   if(wheel.ledMode==0)
     pwm=0;
   else if(wheel.ledMode==1)
-    pwm=255.0f;// / (menu3QuartzMax/2) * min(menu3QuartzMax/2, 0+abs(menu3Quarz-(menu3QuartzMax/2)));
+    pwm=100;// / (menu3QuartzMax/2) * min(menu3QuartzMax/2, 0+abs(menu3Quartz-(menu3QuartzMax/2)));
   else if(wheel.ledMode==2)
     pwm=255;
   else if(wheel.ledMode==3)
-    pwm=255.0f;// / (menuQuartzMax/2) * min(menuQuartzMax/2, 0+abs(menuQuarz-(menuQuartzMax/2)));
-  
+    pwm = menuQuartz > menuQuartzMax/2 ? 255 : 0;
+
   setWheelIndicator(pwm);
 }
 
@@ -302,14 +304,27 @@ void setWheelIndicator(int pwm)
 
 int getWI()
 {
-  return analogRead(wheel.wIndicator) > 300
+  int value = analogRead(wheel.wIndicator);
+  wIndicator = value / middle + wIndicator / middle * (middle-1);
+  if(value>100)
+  {
+    wIndicator = 1024;
+  }
+  log(wIndicator);
+  return wIndicator > 100
     ? HIGH
     : LOW;
 }
 
 int getWSI()
 {
-  return analogRead(wheel.wsIndicator) > 300
+  int value = analogRead(wheel.wsIndicator);
+  wsIndicator = value / middle + wsIndicator / middle * (middle-1);
+  if(value>100)
+  {
+    wsIndicator = 1024;
+  }
+  return wsIndicator > 100
     ? HIGH
     : LOW;
 }
@@ -355,12 +370,8 @@ void wswSwitch1(int eventWheel)
   if(eventWheel==0 || eventWheel==1)
     return;
 
-  int wI=wheel.ledMode==1 || wheel.ledMode==2
-    ? 1
-    : 0;
-  int wsI=wheel.ledMode==3 || wheel.ledMode==2
-    ? 1
-    : 0;
+  int wI=getWI();
+  int wsI=getWSI();
   log("wswi1", wI, wsI);
 
   if(eventWheel==-1)
@@ -369,25 +380,21 @@ void wswSwitch1(int eventWheel)
     {
       //руль включить
       wClickBtn();
-      wheel.ledMode=1;
     }
     else if(wI==HIGH && wsI==LOW)
     {
       //стекло включить
       wsClickBtn();
-      wheel.ledMode=2;
     }
     else if(wI==HIGH && wsI==HIGH)
     {
       //руль выключить
       wClickBtn();
-      wheel.ledMode=3;
     }
     else if(wI==LOW && wsI==HIGH)
     {
       //стекло выключить
       wsClickBtn();
-      wheel.ledMode=0;
     }
   }
   else if(eventWheel==2)
@@ -493,12 +500,12 @@ void setEditFan(int mode, int editValue)
 //0-12; Each odd value gets blinking
 void setBar(int bar)
 {
-  digitalWrite(seat1.lowLed, ((bar==1 & menuQuarz<10==0)|(bar>1))?HIGH:LOW);
-  digitalWrite(seat1.midLed, ((bar==3 & menuQuarz<10==0)|(bar>3))?HIGH:LOW);
-  digitalWrite(seat1.highLed, ((bar==5 & menuQuarz<10==0)|(bar>5))?HIGH:LOW);
-  digitalWrite(seat2.highLed, ((bar==7 & menuQuarz<10==0)|(bar>7))?HIGH:LOW);
-  digitalWrite(seat2.midLed, ((bar==9 & menuQuarz<10==0)|(bar>9))?HIGH:LOW);
-  digitalWrite(seat2.lowLed, ((bar==11 & menuQuarz<10==0)|(bar>11))?HIGH:LOW);
+  digitalWrite(seat1.lowLed, ((bar==1 & menuQuartz<10==0)|(bar>1))?HIGH:LOW);
+  digitalWrite(seat1.midLed, ((bar==3 & menuQuartz<10==0)|(bar>3))?HIGH:LOW);
+  digitalWrite(seat1.highLed, ((bar==5 & menuQuartz<10==0)|(bar>5))?HIGH:LOW);
+  digitalWrite(seat2.highLed, ((bar==7 & menuQuartz<10==0)|(bar>7))?HIGH:LOW);
+  digitalWrite(seat2.midLed, ((bar==9 & menuQuartz<10==0)|(bar>9))?HIGH:LOW);
+  digitalWrite(seat2.lowLed, ((bar==11 & menuQuartz<10==0)|(bar>11))?HIGH:LOW);
 }
 
 //Приветствие
@@ -798,21 +805,21 @@ void ShowTemp()
   if(curTemp < 0)
   {
     //left LED
-    BlinkBar(2, 3, 1000);
+    BlinkBar(2, 1, 1000);
   }
   else
   {
     //right LED
-    BlinkBar(12, 3, 1000);
+    BlinkBar(12, 1, 1000);
   }
 
-  delay(3000);
+  delay(1000);
   int firstDigit=curTemp/10;
-  BlinkBar(firstDigit*2, 3, 1000);
+  BlinkBar(firstDigit*2, 1, 1000);
 
-  delay(3000);
-  int lastDigit=curTemp-firstDigit;
-  BlinkBar(lastDigit, 3, 1000);
+  delay(1000);
+  int lastDigit=curTemp-firstDigit*10;
+  BlinkBar(lastDigit, 1, 1000);
 }
 
 void BlinkBar(int val, int times, int pause)
@@ -924,7 +931,7 @@ void SetupPins()
   pinMode(wheel.wIndicator, INPUT);
   pinMode(wheel.wsIndicator, INPUT);
   pinMode(wheel.wSignal, OUTPUT);
-  pinMode(wheel.wSignal, OUTPUT);
+  pinMode(wheel.wsSignal, OUTPUT);
   digitalWrite(wheel.wSignal, HIGH);
   digitalWrite(wheel.wsSignal, HIGH);
 }
@@ -973,6 +980,11 @@ void ReadCheckMemory()
     if(clamp(memory.wellcomeState, 0, 1) != memory.wellcomeState)
       err("Out of range wellcomeState", memory.wellcomeState);
   }
+}
+
+void log(int val)
+{
+  Serial.println(val);
 }
 
 void log(String msg, int val)
