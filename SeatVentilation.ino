@@ -1,3 +1,5 @@
+#include <iarduino_VCC.h>
+
 #include <DHT.h>
 #include <DHT_U.h>
 
@@ -197,6 +199,8 @@ void loop()
   menu3Quartz++;
   if(menu3Quartz>menu3QuartzMax) menu3Quartz=0;
   delay(50);
+  float i = analogRead_VCC();
+  log("VCC",i);
 }
 
 //0-idle; 1-down; 2-long; -1-up
@@ -310,7 +314,7 @@ int getWI()
   {
     wIndicator = 1024;
   }
-  log(wIndicator);
+  //log(wIndicator);
   return wIndicator > 100
     ? HIGH
     : LOW;
@@ -984,6 +988,12 @@ void ReadCheckMemory()
 
 void log(int val)
 {
+  Serial.println(val);
+}
+
+void log(String msg, float val)
+{
+  Serial.print(msg+": ");
   Serial.println(val);
 }
 
