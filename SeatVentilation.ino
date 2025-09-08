@@ -244,7 +244,7 @@ int getBtnEvent(Wheel* wheel)
   if(pinValue<500)
   {
     wheel->btnPressCounter++;
-    if(wheel->btnPressCounter==30){
+    if(wheel->btnPressCounter==14){
       return 2;
     }
     else if(wheel->btnPressCounter==1){
@@ -254,7 +254,7 @@ int getBtnEvent(Wheel* wheel)
       return 0;
     }
   }
-  else if(wheel->btnPressCounter>=30)
+  else if(wheel->btnPressCounter>=14)
   {
     wheel->btnPressCounter=0;
     return 0;
@@ -361,11 +361,6 @@ void wswSwitch0(int eventWheel)
       wsClickBtn();
     }
   }
-
-  setWheelIndicator(0);
-  delay(50);
-  setWheelIndicator(255);
-
   memoryMode(&wheel);
 }
 
@@ -414,12 +409,6 @@ void wswSwitch1(int eventWheel)
       wsClickBtn();
     }
   }
-
-  setWheelIndicator(0);
-  delay(100);
-  setWheelIndicator(255);
-  delay(100);
-
   memoryMode(&wheel);
 }
 
