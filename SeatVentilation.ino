@@ -425,23 +425,23 @@ void wswSwitch1(int eventWheel)
 
 void wClickBtn()
 {
-  digitalWrite(wheel.wSignal, LOW);
-  delay(200);
   digitalWrite(wheel.wSignal, HIGH);
+  delay(200);
+  digitalWrite(wheel.wSignal, LOW);
 }
 
 void wsClickBtn()
 {
-  digitalWrite(wheel.wsSignal, LOW);
-  delay(200);
   digitalWrite(wheel.wsSignal, HIGH);
+  delay(200);
+  digitalWrite(wheel.wsSignal, LOW);
 }
 
 void nextMode(Seat* seat)
 {
-  seat->mode++;
-  if(seat->mode>3)
-    seat->mode=0;
+  seat->mode--;
+  if(seat->mode<0)
+    seat->mode=3;
   setVentilation(*seat);
   memoryMode(seat);
 }
@@ -936,8 +936,8 @@ void SetupPins()
   pinMode(wheel.wsIndicator, INPUT);
   pinMode(wheel.wSignal, OUTPUT);
   pinMode(wheel.wsSignal, OUTPUT);
-  digitalWrite(wheel.wSignal, HIGH);
-  digitalWrite(wheel.wsSignal, HIGH);
+  digitalWrite(wheel.wSignal, LOW);
+  digitalWrite(wheel.wsSignal, LOW);
 }
 
 //Считывает сохраннные настройки и проверяет данные на валидность
