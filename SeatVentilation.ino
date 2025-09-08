@@ -289,11 +289,11 @@ void setWheelIndicator()
 
   int pwm=0;
   if(wheel.ledMode==0)
-    pwm=0;
+    pwm = 0;
   else if(wheel.ledMode==1)
-    pwm=100;// / (menu3QuartzMax/2) * min(menu3QuartzMax/2, 0+abs(menu3Quartz-(menu3QuartzMax/2)));
+    pwm = 100;// / (menu3QuartzMax/2) * min(menu3QuartzMax/2, 0+abs(menu3Quartz-(menu3QuartzMax/2)));
   else if(wheel.ledMode==2)
-    pwm=255;
+    pwm = menuQuartz > menuQuartzMax/2 ? 255 : 80;
   else if(wheel.ledMode==3)
     pwm = menuQuartz > menuQuartzMax/2 ? 255 : 0;
 
