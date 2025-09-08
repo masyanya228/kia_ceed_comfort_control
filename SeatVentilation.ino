@@ -93,6 +93,14 @@ void setup()
 
 void loop()
 {
+  if (Serial.available()) {
+    String com = Serial.readString();
+    if (com.startsWith("set_wi"))
+    {
+      setWheelIndicator(com.substring(6).toInt());
+    }
+  }
+  
   if(!autoOnExecuted && millis()>1000*5)
   {
     autoOnExecuted=true;
