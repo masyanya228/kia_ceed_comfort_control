@@ -1,3 +1,5 @@
+bool isDebug = false;
+
 #include <iarduino_VCC.h>
 
 #include <DHT.h>
@@ -110,9 +112,9 @@ void loop()
   int event1=getBtnEvent(&seat1);
   int event2=getBtnEvent(&seat2);
   int eventWheel=getBtnEvent(&wheel);
-  if(event1!=0) log("Vent1", event1);
-  if(event2!=0) log("Vent2", event2);
-  if(eventWheel!=0) log("Wheel", eventWheel);
+  if(event1!=0) log("Vent1 btn", event1);
+  if(event2!=0) log("Vent2 btn", event2);
+  if(eventWheel!=0) log("Wheel btn", eventWheel);
   if(menu==0)
   {
     if(event1==-1)
@@ -309,7 +311,7 @@ void setWheelIndicator()
 
 void setWheelIndicator(int pwm)
 {
-  //log("Led", wheel.ledMode, pwm);
+  log("wheel indicator", wheel.ledMode, pwm);
   analogWrite(wheel.led, pwm);
 }
 
@@ -321,7 +323,6 @@ int getWI()
   {
     wIndicator = 1024;
   }
-  //log(wIndicator);
   return wIndicator > 100
     ? HIGH
     : LOW;
@@ -872,29 +873,35 @@ void AutoOn()
   if(seat1.mode==0 && IsNeedVentilationByTemp())
   {
     seat1.mode=1;
+    log("vent1 auto ON: mode 1", GetTemp());
     setVentilation(seat1);
   }
   else if(seat1.mode==0 && memory.ventilationStateMemory)
   {
     seat1.mode=memory.ventilationState1;
+    log("vent1 memory ON", seat1.mode);
     setVentilation(seat1);
   }
 
   if(!getWSI() && IsNeedWSByTemp())
   {
+    log("wind shield auto ON", GetTemp());
     wsClickBtn();
   }
   else if(!getWSI() && memory.wsStateMemory && memory.wsState==1)
   {
+    log("wind shield memory ON", 0);
     wsClickBtn();
   }
 
   if(!getWI() && IsNeedWByTemp())
   {
+    log("wheel auto ON", GetTemp());
     wClickBtn();
   }
   else if(!getWI() && memory.wStateMemory && memory.wState==1)
   {
+    log("wheel memory ON", 0);
     wClickBtn();
   }
 }
@@ -984,23 +991,27 @@ void ReadCheckMemory()
 
 void log(int val)
 {
+  if(!isDebug) return;
   Serial.println(val);
 }
 
 void log(String msg, float val)
 {
+  if(!isDebug) return;
   Serial.print(msg+": ");
   Serial.println(val);
 }
 
 void log(String msg, int val)
 {
+  if(!isDebug) return;
   Serial.print(msg+": ");
   Serial.println(val);
 }
 
 void log(String msg, int val, int val2)
 {
+  if(!isDebug) return;
   Serial.print(msg+": ");
   Serial.print(val);
   Serial.print(", ");
@@ -1009,6 +1020,7 @@ void log(String msg, int val, int val2)
 
 void err(String msg, int val)
 {
+  if(!isDebug) return;
   Serial.print("ERR: " + msg + ": ");
   Serial.println(val);
 }
