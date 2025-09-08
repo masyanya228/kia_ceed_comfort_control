@@ -78,7 +78,6 @@ void setup()
 {
   SetupPins();
   dht22.begin();
-  delay(2000);
   Serial.begin(9600);
   log("Temp", millis()/1000, GetTemp());
 
