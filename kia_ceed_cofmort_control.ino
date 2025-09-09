@@ -88,6 +88,9 @@ void setup()
   log("FanMidSpeed", memory.midSpeed, (fanSpeeds.mid+5*memory.midSpeed));
   log("FanHighSpeed", memory.highSpeed, (fanSpeeds.high+5*memory.highSpeed));
 
+  float i = analogRead_VCC();
+  log("VCC",i);
+
   if(memory.wellcomeState==1)
     wellcome();
 }
@@ -199,8 +202,6 @@ void loop()
   menu3Quartz++;
   if(menu3Quartz>menu3QuartzMax) menu3Quartz=0;
   delay(50);
-  float i = analogRead_VCC();
-  log("VCC",i);
 }
 
 //0-idle; 1-down; 2-long; -1-up
