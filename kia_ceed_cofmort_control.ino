@@ -1,3 +1,5 @@
+bool isDebug = false;
+
 #include <iarduino_VCC.h>
 
 #include <DHT.h>
@@ -78,7 +80,6 @@ void setup()
 {
   SetupPins();
   dht22.begin();
-  delay(2000);
   Serial.begin(9600);
   log("Temp", millis()/1000, GetTemp());
 
@@ -97,6 +98,14 @@ void setup()
 
 void loop()
 {
+  if (Serial.available()) {
+    String com = Serial.readString();
+    if (com.startsWith("set_wi"))
+    {
+      setWheelIndicator(com.substring(6).toInt());
+    }
+  }
+  
   if(!autoOnExecuted && millis()>1000*5)
   {
     autoOnExecuted=true;
@@ -106,9 +115,9 @@ void loop()
   int event1=getBtnEvent(&seat1);
   int event2=getBtnEvent(&seat2);
   int eventWheel=getBtnEvent(&wheel);
-  if(event1!=0) log("Vent1", event1);
-  if(event2!=0) log("Vent2", event2);
-  if(eventWheel!=0) log("Wheel", eventWheel);
+  if(event1!=0) log("Vent1 btn", event1);
+  if(event2!=0) log("Vent2 btn", event2);
+  if(eventWheel!=0) log("Wheel btn", eventWheel);
   if(menu==0)
   {
     if(event1==-1)
@@ -245,7 +254,7 @@ int getBtnEvent(Wheel* wheel)
   if(pinValue<500)
   {
     wheel->btnPressCounter++;
-    if(wheel->btnPressCounter==30){
+    if(wheel->btnPressCounter==14){
       return 2;
     }
     else if(wheel->btnPressCounter==1){
@@ -255,7 +264,7 @@ int getBtnEvent(Wheel* wheel)
       return 0;
     }
   }
-  else if(wheel->btnPressCounter>=30)
+  else if(wheel->btnPressCounter>=14)
   {
     wheel->btnPressCounter=0;
     return 0;
@@ -290,11 +299,11 @@ void setWheelIndicator()
 
   int pwm=0;
   if(wheel.ledMode==0)
-    pwm=0;
+    pwm = 0;
   else if(wheel.ledMode==1)
-    pwm=100;// / (menu3QuartzMax/2) * min(menu3QuartzMax/2, 0+abs(menu3Quartz-(menu3QuartzMax/2)));
+    pwm = 100;// / (menu3QuartzMax/2) * min(menu3QuartzMax/2, 0+abs(menu3Quartz-(menu3QuartzMax/2)));
   else if(wheel.ledMode==2)
-    pwm=255;
+    pwm = menuQuartz > menuQuartzMax/2 ? 255 : 80;
   else if(wheel.ledMode==3)
     pwm = menuQuartz > menuQuartzMax/2 ? 255 : 0;
 
@@ -303,7 +312,7 @@ void setWheelIndicator()
 
 void setWheelIndicator(int pwm)
 {
-  //log("Led", wheel.ledMode, pwm);
+  log("wheel indicator", wheel.ledMode, pwm);
   analogWrite(wheel.led, pwm);
 }
 
@@ -315,7 +324,6 @@ int getWI()
   {
     wIndicator = 1024;
   }
-  //log(wIndicator);
   return wIndicator > 100
     ? HIGH
     : LOW;
@@ -362,11 +370,6 @@ void wswSwitch0(int eventWheel)
       wsClickBtn();
     }
   }
-
-  setWheelIndicator(0);
-  delay(50);
-  setWheelIndicator(255);
-
   memoryMode(&wheel);
 }
 
@@ -415,34 +418,28 @@ void wswSwitch1(int eventWheel)
       wsClickBtn();
     }
   }
-
-  setWheelIndicator(0);
-  delay(100);
-  setWheelIndicator(255);
-  delay(100);
-
   memoryMode(&wheel);
 }
 
 void wClickBtn()
 {
-  digitalWrite(wheel.wSignal, LOW);
-  delay(200);
   digitalWrite(wheel.wSignal, HIGH);
+  delay(200);
+  digitalWrite(wheel.wSignal, LOW);
 }
 
 void wsClickBtn()
 {
-  digitalWrite(wheel.wsSignal, LOW);
-  delay(200);
   digitalWrite(wheel.wsSignal, HIGH);
+  delay(200);
+  digitalWrite(wheel.wsSignal, LOW);
 }
 
 void nextMode(Seat* seat)
 {
-  seat->mode++;
-  if(seat->mode>3)
-    seat->mode=0;
+  seat->mode--;
+  if(seat->mode<0)
+    seat->mode=3;
   setVentilation(*seat);
   memoryMode(seat);
 }
@@ -877,29 +874,35 @@ void AutoOn()
   if(seat1.mode==0 && IsNeedVentilationByTemp())
   {
     seat1.mode=1;
+    log("vent1 auto ON: mode 1", GetTemp());
     setVentilation(seat1);
   }
   else if(seat1.mode==0 && memory.ventilationStateMemory)
   {
     seat1.mode=memory.ventilationState1;
+    log("vent1 memory ON", seat1.mode);
     setVentilation(seat1);
   }
 
   if(!getWSI() && IsNeedWSByTemp())
   {
+    log("wind shield auto ON", GetTemp());
     wsClickBtn();
   }
   else if(!getWSI() && memory.wsStateMemory && memory.wsState==1)
   {
+    log("wind shield memory ON", 0);
     wsClickBtn();
   }
 
   if(!getWI() && IsNeedWByTemp())
   {
+    log("wheel auto ON", GetTemp());
     wClickBtn();
   }
   else if(!getWI() && memory.wStateMemory && memory.wState==1)
   {
+    log("wheel memory ON", 0);
     wClickBtn();
   }
 }
@@ -937,8 +940,8 @@ void SetupPins()
   pinMode(wheel.wsIndicator, INPUT);
   pinMode(wheel.wSignal, OUTPUT);
   pinMode(wheel.wsSignal, OUTPUT);
-  digitalWrite(wheel.wSignal, HIGH);
-  digitalWrite(wheel.wsSignal, HIGH);
+  digitalWrite(wheel.wSignal, LOW);
+  digitalWrite(wheel.wsSignal, LOW);
 }
 
 //Считывает сохраннные настройки и проверяет данные на валидность
@@ -989,23 +992,27 @@ void ReadCheckMemory()
 
 void log(int val)
 {
+  if(!isDebug) return;
   Serial.println(val);
 }
 
 void log(String msg, float val)
 {
+  if(!isDebug) return;
   Serial.print(msg+": ");
   Serial.println(val);
 }
 
 void log(String msg, int val)
 {
+  if(!isDebug) return;
   Serial.print(msg+": ");
   Serial.println(val);
 }
 
 void log(String msg, int val, int val2)
 {
+  if(!isDebug) return;
   Serial.print(msg+": ");
   Serial.print(val);
   Serial.print(", ");
@@ -1014,6 +1021,7 @@ void log(String msg, int val, int val2)
 
 void err(String msg, int val)
 {
+  if(!isDebug) return;
   Serial.print("ERR: " + msg + ": ");
   Serial.println(val);
 }
