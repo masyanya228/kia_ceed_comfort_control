@@ -873,7 +873,7 @@ bool IsNeedWSByTemp()
 bool IsNeedWByTemp()
 {
   if(memory.autoWheel == clamp(memory.autoWheel, 1, 12))
-    return (12 + memory.autoWheel*-2) > GetTemp();
+    return (14 + memory.autoWheel*-2) > GetTemp();
   else
     return false;
 }
