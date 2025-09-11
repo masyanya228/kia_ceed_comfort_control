@@ -852,6 +852,8 @@ int GetTemp()
 }
 
 //Вентиляция водителя по темпратуре при запуске
+//1: 14
+//12: 36
 bool IsNeedVentilationByTemp()
 {
   if(memory.autoVentilation == clamp(memory.autoVentilation, 1, 12))
@@ -861,6 +863,8 @@ bool IsNeedVentilationByTemp()
 }
 
 //Обогрев лобового стекла по темпратуре при запуске
+//1: -1
+//12: -12
 bool IsNeedWSByTemp()
 {
   if(memory.autoWindShield == clamp(memory.autoWindShield, 1, 12))
@@ -870,6 +874,8 @@ bool IsNeedWSByTemp()
 }
 
 //Обогрев руля по темпратуре при запуске
+//1: 12
+//12: -10
 bool IsNeedWByTemp()
 {
   if(memory.autoWheel == clamp(memory.autoWheel, 1, 12))
