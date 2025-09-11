@@ -6,7 +6,7 @@ bool isDebug = true;
 #include <iarduino_VCC.h>
 
 #include <EEPROM.h>
-#define DHT22_PIN 13
+#define DHT22_PIN A5
 
 const int menuQuartzMax=20;//1sec
 const int menu3QuartzMax=100;//5sec
@@ -956,6 +956,9 @@ void SetupPins()
   pinMode(wheel.wsIndicator, INPUT);
   pinMode(wheel.wSignal, OUTPUT);
   pinMode(wheel.wsSignal, OUTPUT);
+  
+  pinMode(DHT22_PIN, INPUT);
+  
   digitalWrite(wheel.wSignal, LOW);
   digitalWrite(wheel.wsSignal, LOW);
 }
