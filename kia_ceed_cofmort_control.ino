@@ -1,9 +1,9 @@
-bool isDebug = false;
-
-#include <iarduino_VCC.h>
-
 #include <DHT.h>
 #include <DHT_U.h>
+
+bool isDebug = true;
+
+#include <iarduino_VCC.h>
 
 #include <EEPROM.h>
 #define DHT22_PIN 13
@@ -81,7 +81,6 @@ void setup()
   SetupPins();
   dht22.begin();
   Serial.begin(9600);
-  log("Temp", millis()/1000, GetTemp());
 
   ReadCheckMemory();
 
@@ -90,7 +89,7 @@ void setup()
   log("FanHighSpeed", memory.highSpeed, (fanSpeeds.high+5*memory.highSpeed));
 
   float i = analogRead_VCC();
-  log("VCC",i);
+  log("VCC", i);
 
   if(memory.wellcomeState==1)
     wellcome();
@@ -98,6 +97,7 @@ void setup()
 
 void loop()
 {
+  //log("Temp", millis()/1000, GetTemp());
   if (Serial.available()) {
     String com = Serial.readString();
     if (com.startsWith("set_wi"))
@@ -315,7 +315,6 @@ void setWheelIndicator()
 
 void setWheelIndicator(int pwm)
 {
-  log("wheel indicator", wheel.ledMode, pwm);
   analogWrite(wheel.led, pwm);
 }
 
