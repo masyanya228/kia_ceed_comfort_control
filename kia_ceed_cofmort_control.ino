@@ -165,6 +165,7 @@ void loop()
       menu=0;
       setIndicator(seat1);
       setIndicator(seat2);
+      BlinkBar(12, 3, 100);
     }
   }
   else
@@ -182,16 +183,18 @@ void loop()
       setEditFan(menu, editValue);
     }
 
-    if(event1==2)
+    if(event1==2)//save
     {
       isMenuEdit=false;
       saveValue(menu);
+      BlinkBar(12, 2, 100);
     }
-    if(event2==2)
+    if(event2==2)//dont save changes
     {
       isMenuEdit=false;
       setVentilation(seat1);
       setVentilation(seat2);
+      BlinkBar(12, 3, 50);
     }
     setBar(editValue);
   }
