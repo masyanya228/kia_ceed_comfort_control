@@ -105,6 +105,10 @@ void loop()
     {
       setWheelIndicator(com.substring(6).toInt());
     }
+    else if (com.startsWith("temp"))
+    {
+      log("temp", GetTemp());
+    }
   }
   
   if(!autoOnExecuted && millis()>1000*5)
