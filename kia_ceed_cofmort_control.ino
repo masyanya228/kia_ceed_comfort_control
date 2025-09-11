@@ -23,6 +23,7 @@ DHT dht22(DHT22_PIN, DHT22);
 
 int wIndicator = 0;
 int wsIndicator = 0;
+int lastWheelInd = 0;
 
 struct Memory{
   int lowSpeed = 10;
@@ -306,10 +307,13 @@ void setWheelIndicator()
   else if(wheel.ledMode==1)
     pwm = 100;// / (menu3QuartzMax/2) * min(menu3QuartzMax/2, 0+abs(menu3Quartz-(menu3QuartzMax/2)));
   else if(wheel.ledMode==2)
-    pwm = menuQuartz > menuQuartzMax/2 ? 255 : 80;
+    pwm = menuQuartz > menuQuartzMax/2 ? 255 : 180;
   else if(wheel.ledMode==3)
     pwm = menuQuartz > menuQuartzMax/2 ? 255 : 0;
 
+  if(wheel.ledMode==0 && lastWheelInd==0) return;
+  
+  lastWheelInd = pwm;
   setWheelIndicator(pwm);
 }
 
