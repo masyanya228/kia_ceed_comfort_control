@@ -371,8 +371,7 @@ void wswSwitch0(int eventWheel)
     if(wI==LOW && wsI==LOW)
     {
       //руль+стекло включить
-      wsClickBtn();
-      wClickBtn();
+      w_wsClickBtn();
     }
     else
     {
@@ -434,14 +433,23 @@ void wswSwitch1(int eventWheel)
 void wClickBtn()
 {
   digitalWrite(wheel.wSignal, HIGH);
-  delay(200);
+  delay(150);
   digitalWrite(wheel.wSignal, LOW);
 }
 
 void wsClickBtn()
 {
   digitalWrite(wheel.wsSignal, HIGH);
-  delay(200);
+  delay(150);
+  digitalWrite(wheel.wsSignal, LOW);
+}
+
+void w_wsClickBtn()
+{
+  digitalWrite(wheel.wSignal, HIGH);
+  digitalWrite(wheel.wsSignal, HIGH);
+  delay(150);
+  digitalWrite(wheel.wSignal, LOW);
   digitalWrite(wheel.wsSignal, LOW);
 }
 
