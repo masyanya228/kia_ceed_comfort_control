@@ -133,11 +133,7 @@ void loop()
     {
       nextMode(&seat2);
     }
-    if(event1==2 && event2==1)
-    {
-      ShowTemp();
-    }
-    else if(event1==2)
+    if(event1==2)
     {
       BlinkBar(12, 1, 100);
       menu=1;
@@ -196,6 +192,10 @@ void loop()
     }
     if(event2==2)//dont save changes
     {
+      if(menu==12)
+      {
+        ShowTemp();
+      }
       isMenuEdit=false;
       setVentilation(seat1);
       setVentilation(seat2);
