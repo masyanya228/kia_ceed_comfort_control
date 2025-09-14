@@ -164,9 +164,9 @@ void loop()
     {
       isMenuEdit=false;
       menu=0;
+      BlinkBar(12, 3, 100);
       setIndicator(seat1);
       setIndicator(seat2);
-      BlinkBar(12, 3, 100);
     }
   }
   else
@@ -183,6 +183,7 @@ void loop()
     {
       setEditFan(menu, editValue);
     }
+    setBar(editValue);
 
     if(event1==2)//save
     {
@@ -197,11 +198,10 @@ void loop()
         ShowTemp();
       }
       isMenuEdit=false;
+      BlinkBar(12, 3, 50);
       setVentilation(seat1);
       setVentilation(seat2);
-      BlinkBar(12, 3, 50);
     }
-    setBar(editValue);
   }
 
   if(memory.wswTypeOfSwitch==0)
