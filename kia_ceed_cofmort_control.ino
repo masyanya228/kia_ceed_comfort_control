@@ -864,19 +864,12 @@ int GetTemp()
 //12: 36
 bool IsNeedVentilationByTemp()
 {
+  log("autoVentilation", memory.autoVentilation);
   if(memory.autoVentilation == clamp(memory.autoVentilation, 1, 12))
-    return (12 + memory.autoVentilation*2) > GetTemp();
-  else
-    return false;
-}
-
-//Обогрев лобового стекла по темпратуре при запуске
-//1: -1
-//12: -12
-bool IsNeedWSByTemp()
-{
-  if(memory.autoWindShield == clamp(memory.autoWindShield, 1, 12))
-    return (0 + memory.autoWindShield*-1) > GetTemp();
+  {
+    log("temp target/real", (12 + memory.autoVentilation*2), GetTemp());
+    return (12 + memory.autoVentilation*2) < GetTemp();
+  }
   else
     return false;
 }
@@ -886,8 +879,27 @@ bool IsNeedWSByTemp()
 //12: -10
 bool IsNeedWByTemp()
 {
+  log("autoWheel", memory.autoWheel);
   if(memory.autoWheel == clamp(memory.autoWheel, 1, 12))
+  {
+    log("temp target/real", (14 + memory.autoWheel*-2), GetTemp());
     return (14 + memory.autoWheel*-2) > GetTemp();
+  }
+  else
+    return false;
+}
+
+//Обогрев лобового стекла по темпратуре при запуске
+//1: -1
+//12: -12
+bool IsNeedWSByTemp()
+{
+  log("autoWindShield", memory.autoWindShield);
+  if(memory.autoWindShield == clamp(memory.autoWindShield, 1, 12))
+  {
+    log("temp target/real", (0 + memory.autoWindShield*-1), GetTemp());
+    return (0 + memory.autoWindShield*-1) > GetTemp();
+  }
   else
     return false;
 }
@@ -895,6 +907,7 @@ bool IsNeedWByTemp()
 //Управляет автоматическим включением вентиляции, обогрева руля и обогрева лобового стекла пи запуске авто.
 void AutoOn()
 {
+  log("Current vent1 mode", seat1.mode);
   if(seat1.mode==0 && IsNeedVentilationByTemp())
   {
     seat1.mode=1;
@@ -908,17 +921,7 @@ void AutoOn()
     setVentilation(seat1);
   }
 
-  if(!getWSI() && IsNeedWSByTemp())
-  {
-    log("wind shield auto ON", GetTemp());
-    wsClickBtn();
-  }
-  else if(!getWSI() && memory.wsStateMemory && memory.wsState==1)
-  {
-    log("wind shield memory ON", 0);
-    wsClickBtn();
-  }
-
+  log("Current wheel mode", getWI());
   if(!getWI() && IsNeedWByTemp())
   {
     log("wheel auto ON", GetTemp());
@@ -926,8 +929,20 @@ void AutoOn()
   }
   else if(!getWI() && memory.wStateMemory && memory.wState==1)
   {
-    log("wheel memory ON", 0);
+    log("wheel memory ON", 1);
     wClickBtn();
+  }
+
+  log("Current wind shield mode", getWSI());
+  if(!getWSI() && IsNeedWSByTemp())
+  {
+    log("wind shield auto ON", GetTemp());
+    wsClickBtn();
+  }
+  else if(!getWSI() && memory.wsStateMemory && memory.wsState==1)
+  {
+    log("wind shield memory ON", 1);
+    wsClickBtn();
   }
 }
 
