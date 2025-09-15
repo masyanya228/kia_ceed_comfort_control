@@ -1,12 +1,28 @@
+bool isDebug = true;
 #include <DHT.h>
 #include <DHT_U.h>
-
-bool isDebug = true;
-
 #include <iarduino_VCC.h>
-
 #include <EEPROM.h>
 #define DHT22_PIN A5
+
+#define SEAT_1_BTN A0;
+#define SEAT_2_BTN A1;
+#define FAN_1_CONTROL 9;
+#define FAN_2_CONTROL 5;
+#define IND_1_LOW 8;
+#define IND_2_LOW 10;
+#define IND_1_MID 7;
+#define IND_2_MID 11;
+#define IND_1_HIGH 6;
+#define IND_2_HIGH 12;
+
+#define WHEEL_BTN A2;
+#define WHEEL_BTN_LED 3;
+#define WHEEL_SIG 4;
+#define WIND_SHEILD_SIG 2;
+#define WHEEL_IND A3;
+#define WIND_SHIELD_IND A4;
+
 
 const int menuQuartzMax=20;//1sec
 const int menu3QuartzMax=100;//5sec
@@ -67,15 +83,16 @@ Seat seat1;
 Seat seat2;
 
 struct Wheel{
-  int btn=A2;
+  int btn;
   int btnPressCounter=0;
-  int led = 3;
   int ledMode=0;//0-idle; 1-w; 2-ws; 3-s
-  int wSignal = 4;
-  int wsSignal = 2;
-  int wIndicator = A3;
-  int wsIndicator = A4;
-} wheel;
+  int led;
+  int wSignal;
+  int wsSignal;
+  int wIndicator;
+  int wsIndicator;
+};
+Wheel wheel;
 
 void setup()
 {
@@ -98,7 +115,6 @@ void setup()
 
 void loop()
 {
-  //log("Temp", millis()/1000, GetTemp());
   if (Serial.available()) {
     String com = Serial.readString();
     if (com.startsWith("set_wi"))
@@ -221,7 +237,10 @@ void loop()
   delay(50);
 }
 
-//0-idle; 1-down; 2-long; -1-up
+/*
+Получить событие кнопки "Вентиляция"
+0-idle; 1-down; 2-long; -1-up
+*/
 int getBtnEvent(Seat* seat)
 {
   int pinValue=analogRead(seat->btnPin);
@@ -254,7 +273,10 @@ int getBtnEvent(Seat* seat)
   }
 }
 
-//0-idle; 1-down; 2-long; -1-up
+/*
+Получить событие кнопки "Обогрев руля"
+0-idle; 1-down; 2-long; -1-up
+*/
 int getBtnEvent(Wheel* wheel)
 {
   int pinValue=analogRead(wheel->btn);
@@ -287,6 +309,7 @@ int getBtnEvent(Wheel* wheel)
   }
 }
 
+//Расчет анимации индикатора на кнопке "Обогрев руля"
 void setWheelIndicator()
 {
   //0-idle; 1-w; 2-ws; 3-s
@@ -321,12 +344,14 @@ void setWheelIndicator()
   setWheelIndicator(pwm);
 }
 
+//Установить индикатор на кнопке "Обогрев руля"
 void setWheelIndicator(int pwm)
 {
   analogWrite(wheel.led, pwm);
 }
 
-int getWI()
+//Получить статус работы обогрева руля
+bool getWI()
 {
   int value = analogRead(wheel.wIndicator);
   wIndicator = value / middle + wIndicator / middle * (middle-1);
@@ -334,12 +359,11 @@ int getWI()
   {
     wIndicator = 1024;
   }
-  return wIndicator > 100
-    ? HIGH
-    : LOW;
+  return wIndicator > 100;
 }
 
-int getWSI()
+//Получить статус работы обогрева лобаша
+bool getWSI()
 {
   int value = analogRead(wheel.wsIndicator);
   wsIndicator = value / middle + wsIndicator / middle * (middle-1);
@@ -347,9 +371,7 @@ int getWSI()
   {
     wsIndicator = 1024;
   }
-  return wsIndicator > 100
-    ? HIGH
-    : LOW;
+  return wsIndicator > 100;
 }
 
 void wswSwitch0(int eventWheel)
@@ -497,26 +519,6 @@ void setFan(Seat seat)
   analogWrite(seat.fanPwmPin, speed);
 }
 
-void setEditFan(int mode, int editValue)
-{
-  int speed=0;
-  if(mode==1)
-  {
-    speed=fanSpeeds.low+5*editValue;
-  }
-  else if(mode==2)
-  {
-    speed=fanSpeeds.mid+5*editValue;
-  }
-  else if(mode==3)
-  {
-    speed=fanSpeeds.high+5*editValue;
-  }
-  log("setEditFan", mode, speed);
-  analogWrite(seat1.fanPwmPin, speed);
-  analogWrite(seat2.fanPwmPin, speed);
-}
-
 //0-12; Each odd value gets blinking
 void setBar(int bar)
 {
@@ -558,290 +560,6 @@ void wellcome()
   delay(200);
 }
 
-int clamp(int val, int min, int max)
-{
-  return val<min?min:(val>max?max:val);
-}
-
-//Получить настройку из памяти
-int getValue(int menu)
-{
-  if(menu==1)
-    return memory.lowSpeed;
-  if(menu==2)
-    return memory.midSpeed;
-  if(menu==3)
-    return memory.highSpeed;
-  if(menu==4)
-    return memory.ventilationStateMemory;
-  if(menu==5)
-    return memory.wStateMemory;
-  if(menu==6)
-    return memory.wsStateMemory;
-  if(menu==7)
-    return memory.wswTypeOfSwitch;
-  if(menu==8)
-    return memory.autoVentilation;
-  if(menu==9)
-    return memory.autoWheel;
-  if(menu==10)
-    return memory.autoWindShield;
-  if(menu==11)
-    return memory.wellcomeState;
-  if(menu==12)
-    return 1;
-
-  err("GetValue imposible", menu);
-  return 0; //imposible
-}
-
-//Сохранить настройку в памяти
-void saveValue(int menu)
-{
-  if(menu==1)
-    memory.lowSpeed=editValue;
-  if(menu==2)
-    memory.midSpeed=editValue;
-  if(menu==3)
-    memory.highSpeed=editValue;
-  if(menu==4)
-    memory.ventilationStateMemory=editValue;
-  if(menu==5)
-    memory.wStateMemory=editValue;
-  if(menu==6)
-    memory.wsStateMemory=editValue;
-  if(menu==7)
-    memory.wswTypeOfSwitch=editValue;
-  if(menu==8)
-    memory.autoVentilation=editValue;
-  if(menu==9)
-    memory.autoWheel=editValue;
-  if(menu==10)
-    memory.autoWindShield=editValue;
-  if(menu==11)
-    memory.wellcomeState=editValue;
-  if(menu==12)
-  {
-    selfTest();
-    return;
-  }
-
-  EEPROM.put(0, memory);
-
-  setVentilation(seat1);
-  setVentilation(seat2);
-}
-
-//Сохранить состояние вентиляций
-void memoryMode(Seat* seat)
-{
-  if(memory.ventilationStateMemory!=1)
-    return;
-  if(seat==&seat1)
-  {
-    if(memory.ventilationState1 != seat->mode)
-    {
-      memory.ventilationState1=seat->mode;
-      EEPROM.put(0, memory);
-    }
-  }
-  else if(seat==&seat2)
-  {
-    if(memory.ventilationState2 != seat->mode)
-    {
-      memory.ventilationState2=seat->mode;
-      EEPROM.put(0, memory);
-    }
-  }
-}
-
-//Сохранить состояние руля и лобаша
-void memoryMode(Wheel* wheel)
-{
-  bool hadChanged = memory.wsState != getWSI() || memory.wState != getWI();
-  memory.wsState = getWSI();
-  memory.wState = getWI();
-  if(memory.wsStateMemory==1 && hadChanged)
-    EEPROM.put(0, memory);
-}
-
-//Провести самодиагностику
-void selfTest()
-{
-  int prevVent1=seat1.mode;
-  int prevVent2=seat2.mode;
-  int prevW=getWI();
-  int prevWS=getWSI();
-
-  seat1.mode=0;
-  setVentilation(seat1);
-  seat2.mode=0;
-  setVentilation(seat2);
-  if(prevW)
-    wClickBtn();
-  if(prevWS)
-    wsClickBtn();
-  
-  BlinkBar(12, 3, 1000);
-  
-  //check wheel
-  wClickBtn();
-  delay(1000);
-  if(getWI())
-  {
-    setWheelIndicator(255);
-    delay(2000);
-    setWheelIndicator(0);
-    wClickBtn();
-  }
-  else
-  {
-    //3 short, 1 long
-    setWheelIndicator(255);
-    delay(200);
-    setWheelIndicator(0);
-    delay(200);
-    setWheelIndicator(255);
-    delay(200);
-    setWheelIndicator(0);
-    delay(200);
-    setWheelIndicator(255);
-    delay(200);
-    setWheelIndicator(0);
-    delay(200);
-
-    setWheelIndicator(255);
-    delay(2000);
-    setWheelIndicator(0);
-  }
-
-  //check wind shield
-  wsClickBtn();
-  delay(1000);
-  if(getWSI())
-  {
-    setWheelIndicator(255);
-    delay(2000);
-    setWheelIndicator(0);
-    wsClickBtn();
-  }
-  else
-  {
-    //3 short, 2 long
-    setWheelIndicator(255);
-    delay(200);
-    setWheelIndicator(0);
-    delay(200);
-    setWheelIndicator(255);
-    delay(200);
-    setWheelIndicator(0);
-    delay(200);
-    setWheelIndicator(255);
-    delay(200);
-    setWheelIndicator(0);
-    delay(200);
-
-    setWheelIndicator(255);
-    delay(2000);
-    setWheelIndicator(0);
-    delay(1000);
-    setWheelIndicator(255);
-    delay(2000);
-    setWheelIndicator(0);
-  }
-
-  //vent 1 LOW
-  seat1.mode=1;
-  setVentilation(seat1);
-
-  delay(3000);
-
-  //vent 1 MID
-  seat1.mode=2;
-  setVentilation(seat1);
-
-  delay(3000);
-
-  //vent 1 HIGH
-  seat1.mode=3;
-  setVentilation(seat1);
-
-  delay(3000);
-
-  //vent 1 OFF
-  seat1.mode=0;
-  setVentilation(seat1);
-
-  delay(1000);
-
-  //vent 2 LOW
-  seat2.mode=1;
-  setVentilation(seat2);
-
-  delay(3000);
-
-  //vent 2 MID
-  seat2.mode=2;
-  setVentilation(seat2);
-
-  delay(3000);
-
-  //vent 2 HIGH
-  seat2.mode=3;
-  setVentilation(seat2);
-
-  delay(3000);
-
-  //vent 2 OFF
-  seat2.mode=0;
-  setVentilation(seat2);
-
-  delay(1000);
-
-  //vent 1 + 2 HIGH
-  seat1.mode=3;
-  setVentilation(seat1);
-  seat2.mode=3;
-  setVentilation(seat2);
-  delay(6000);
-  
-  ShowTemp();
-
-  //Set as before
-  seat1.mode=prevVent1;
-  setVentilation(seat1);
-  seat2.mode=prevVent2;
-  setVentilation(seat2);
-  if(prevW)
-    wClickBtn();
-  if(prevWS)
-    wsClickBtn();
-}
-
-//Показывает текущую температуру в полу салона
-void ShowTemp()
-{
-  int curTemp = GetTemp();
-  if(curTemp < 0)
-  {
-    //left LED
-    BlinkBar(2, 1, 1000);
-  }
-  else
-  {
-    //right LED
-    BlinkBar(12, 1, 1000);
-  }
-
-  delay(1000);
-  int firstDigit=curTemp/10;
-  BlinkBar(firstDigit*2, 1, 1000);
-
-  delay(1000);
-  int lastDigit=curTemp-firstDigit*10;
-  BlinkBar(lastDigit, 1, 1000);
-}
-
 void BlinkBar(int val, int times, int pause)
 {
   for (int i=0; i<times; i++)
@@ -851,219 +569,4 @@ void BlinkBar(int val, int times, int pause)
     delay(pause);
     setBar(0);
   }
-}
-
-//Возвращает текущую температура с встроенного датчика
-int GetTemp()
-{
-  return dht22.readTemperature();
-}
-
-//Вентиляция водителя по темпратуре при запуске
-//1: 14
-//12: 36
-bool IsNeedVentilationByTemp()
-{
-  log("autoVentilation", memory.autoVentilation);
-  if(memory.autoVentilation == clamp(memory.autoVentilation, 1, 12))
-  {
-    log("temp target/real", (12 + memory.autoVentilation*2), GetTemp());
-    return (12 + memory.autoVentilation*2) < GetTemp();
-  }
-  else
-    return false;
-}
-
-//Обогрев руля по темпратуре при запуске
-//1: 12
-//12: -10
-bool IsNeedWByTemp()
-{
-  log("autoWheel", memory.autoWheel);
-  if(memory.autoWheel == clamp(memory.autoWheel, 1, 12))
-  {
-    log("temp target/real", (14 + memory.autoWheel*-2), GetTemp());
-    return (14 + memory.autoWheel*-2) > GetTemp();
-  }
-  else
-    return false;
-}
-
-//Обогрев лобового стекла по темпратуре при запуске
-//1: -1
-//12: -12
-bool IsNeedWSByTemp()
-{
-  log("autoWindShield", memory.autoWindShield);
-  if(memory.autoWindShield == clamp(memory.autoWindShield, 1, 12))
-  {
-    log("temp target/real", (0 + memory.autoWindShield*-1), GetTemp());
-    return (0 + memory.autoWindShield*-1) > GetTemp();
-  }
-  else
-    return false;
-}
-
-//Управляет автоматическим включением вентиляции, обогрева руля и обогрева лобового стекла пи запуске авто.
-void AutoOn()
-{
-  log("Current vent1 mode", seat1.mode);
-  if(seat1.mode==0 && IsNeedVentilationByTemp())
-  {
-    seat1.mode=1;
-    log("vent1 auto ON: mode 1", GetTemp());
-    setVentilation(seat1);
-  }
-  else if(seat1.mode==0 && memory.ventilationStateMemory)
-  {
-    seat1.mode=memory.ventilationState1;
-    log("vent1 memory ON", seat1.mode);
-    setVentilation(seat1);
-  }
-
-  log("Current wheel mode", getWI());
-  if(!getWI() && IsNeedWByTemp())
-  {
-    log("wheel auto ON", GetTemp());
-    wClickBtn();
-  }
-  else if(!getWI() && memory.wStateMemory && memory.wState==1)
-  {
-    log("wheel memory ON", 1);
-    wClickBtn();
-  }
-
-  log("Current wind shield mode", getWSI());
-  if(!getWSI() && IsNeedWSByTemp())
-  {
-    log("wind shield auto ON", GetTemp());
-    wsClickBtn();
-  }
-  else if(!getWSI() && memory.wsStateMemory && memory.wsState==1)
-  {
-    log("wind shield memory ON", 1);
-    wsClickBtn();
-  }
-}
-
-//Настраивает пины вводы и вывода информации
-void SetupPins()
-{
-  seat1.btnPin=A0;
-  seat1.fanPwmPin=9;
-  seat1.lowLed=8;
-  seat1.midLed=7;
-  seat1.highLed=6;
-
-  seat2.btnPin=A1;
-  seat2.fanPwmPin=5;
-  seat2.lowLed=10;
-  seat2.midLed=11;
-  seat2.highLed=12;
-
-  pinMode(seat1.btnPin, INPUT);
-  pinMode(seat1.fanPwmPin, OUTPUT);
-  pinMode(seat1.lowLed, OUTPUT);
-  pinMode(seat1.midLed, OUTPUT);
-  pinMode(seat1.highLed, OUTPUT);
-  
-  pinMode(seat2.btnPin, INPUT);
-  pinMode(seat2.fanPwmPin, OUTPUT);
-  pinMode(seat2.lowLed, OUTPUT);
-  pinMode(seat2.midLed, OUTPUT);
-  pinMode(seat2.highLed, OUTPUT);
-
-  pinMode(wheel.btn, INPUT);
-  pinMode(wheel.led, OUTPUT);
-  pinMode(wheel.wIndicator, INPUT);
-  pinMode(wheel.wsIndicator, INPUT);
-  pinMode(wheel.wSignal, OUTPUT);
-  pinMode(wheel.wsSignal, OUTPUT);
-  
-  pinMode(DHT22_PIN, INPUT);
-  
-  digitalWrite(wheel.wSignal, LOW);
-  digitalWrite(wheel.wsSignal, LOW);
-}
-
-//Считывает сохраннные настройки и проверяет данные на валидность
-void ReadCheckMemory()
-{
-  EEPROM.get(0, memory);
-  if(memory.lowSpeed==255 || memory.lowSpeed==-1)
-  {
-    log("New memory", 0);
-    Memory newMemory;
-    EEPROM.put(0, newMemory);
-    memory=newMemory;
-  }
-  else
-  {
-    if(clamp(memory.lowSpeed, 0, 12) != memory.lowSpeed)
-      err("Out of range lowSpeed", memory.lowSpeed);
-    if(clamp(memory.midSpeed, 0, 12) != memory.midSpeed)
-      err("Out of range midSpeed", memory.midSpeed);
-    if(clamp(memory.highSpeed, 0, 12) != memory.highSpeed)
-      err("Out of range highSpeed", memory.highSpeed);
-    if(clamp(memory.ventilationStateMemory, 0, 1) != memory.ventilationStateMemory)
-      err("Out of range ventilationStateMemory", memory.ventilationStateMemory);
-    if(clamp(memory.ventilationState1, 0, 3) != memory.ventilationState1)
-      err("Out of range ventilationState1", memory.ventilationState1);
-    if(clamp(memory.ventilationState2, 0, 3) != memory.ventilationState2)
-      err("Out of range ventilationState2", memory.ventilationState2);
-    if(clamp(memory.wsStateMemory, 0, 1) != memory.wsStateMemory)
-      err("Out of range wsStateMemory", memory.wsStateMemory);
-    if(clamp(memory.wsState, 0, 1) != memory.wsState)
-      err("Out of range wsState", memory.wsState);
-    if(clamp(memory.wStateMemory, 0, 1) != memory.wStateMemory)
-      err("Out of range wStateMemory", memory.wStateMemory);
-    if(clamp(memory.wState, 0, 1) != memory.wState)
-      err("Out of range wState", memory.wState);
-    if(clamp(memory.wswTypeOfSwitch, 0, 1) != memory.wswTypeOfSwitch)
-      err("Out of range wswTypeOfSwitch", memory.wswTypeOfSwitch);
-    if(clamp(memory.autoVentilation, 0, 12) != memory.autoVentilation)
-      err("Out of range autoVentilation", memory.autoVentilation);
-    if(clamp(memory.autoWheel, 0, 12) != memory.autoWheel)
-      err("Out of range autoWheel", memory.autoWheel);
-    if(clamp(memory.autoWindShield, 0, 12) != memory.autoWindShield)
-      err("Out of range autoWindShield", memory.autoWindShield);
-    if(clamp(memory.wellcomeState, 0, 1) != memory.wellcomeState)
-      err("Out of range wellcomeState", memory.wellcomeState);
-  }
-}
-
-void log(int val)
-{
-  if(!isDebug) return;
-  Serial.println(val);
-}
-
-void log(String msg, float val)
-{
-  if(!isDebug) return;
-  Serial.print(msg+": ");
-  Serial.println(val);
-}
-
-void log(String msg, int val)
-{
-  if(!isDebug) return;
-  Serial.print(msg+": ");
-  Serial.println(val);
-}
-
-void log(String msg, int val, int val2)
-{
-  if(!isDebug) return;
-  Serial.print(msg+": ");
-  Serial.print(val);
-  Serial.print(", ");
-  Serial.println(val2);
-}
-
-void err(String msg, int val)
-{
-  if(!isDebug) return;
-  Serial.print("ERR: " + msg + ": ");
-  Serial.println(val);
 }
