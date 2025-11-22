@@ -27,7 +27,6 @@ bool isDebug = true;
 const int menuQuartzMax=20;//1sec
 const int menu3QuartzMax=100;//5sec
 const int maxMenuItem=12;
-const int middle=6;
 
 int menu=0;//0-def; 1-speedLow; 2-speedMid; 3-speedHigh; 4-ventilationMemory; 5-wheelMemory; 6-windshieldMemory; 7-wswTypeOfSwitch; 8-autoVent; 9-autoWheel; 10-autoWindShield; 11-wellcome; 12-diagnostic
 bool isMenuEdit=false;
@@ -37,8 +36,6 @@ int menu3Quartz=0;
 bool autoOnExecuted = false;
 DHT dht22(DHT22_PIN, DHT22);
 
-int wIndicator = 0;
-int wsIndicator = 0;
 int lastWheelInd = 0;
 
 struct Memory{
@@ -313,20 +310,7 @@ int getBtnEvent(Wheel* wheel)
 void setWheelIndicator()
 {
   //0-idle; 1-w; 2-ws; 3-s
-  int wI=getWI();
-  int wsI=getWSI();
-  if(wI == LOW)
-  {
-    wheel.ledMode = wsI==LOW
-      ? 0
-      : 3;
-  }
-  else
-  {
-    wheel.ledMode = wsI==LOW
-      ? 1
-      : 2;
-  }
+  getWWSI();
 
   int pwm=0;
   if(wheel.ledMode==0)
@@ -351,25 +335,59 @@ void setWheelIndicator(int pwm)
 }
 
 //Получить статус работы обогрева руля
+bool getWWSI()
+{
+  int wiVal=0;
+  int wsiVal=0;
+  for(int i=0; i<10; i++)//Получить усредненное значение шима
+  {
+    delay(1);
+    wiVal += analogRead(wheel.wIndicator);
+    wsiVal += analogRead(wheel.wsIndicator);
+  }
+  wiVal = wiVal / 10;
+  wsiVal = wsiVal / 10;
+
+  bool wI=wiVal > 10;
+  bool wsI=wsiVal > 10;
+
+  if(wI == false)
+  {
+    wheel.ledMode = wsI==false
+      ? 0
+      : 3;
+  }
+  else
+  {
+    wheel.ledMode = wsI==false
+      ? 1
+      : 2;
+  }
+  return wheel.ledMode;
+}
+
+//Получить статус работы обогрева руля
 bool getWI()
 {
-  int value=0;
-  for(int i=0; i<10; i++)//Получить усредненное значение шима
-   value += analogRead(wheel.wIndicator);
-  value = value / 10;
-  return value > 100;
+  int ledMode=getWWSI();
+  return ledMode==1 || ledMode==2;
 }
 
 //Получить статус работы обогрева лобаша
 bool getWSI()
 {
-  int value = analogRead(wheel.wsIndicator);
-  wsIndicator = value / middle + wsIndicator / middle * (middle-1);
-  if(value>100)
-  {
-    wsIndicator = 1024;
-  }
-  return wsIndicator > 100;
+  int ledMode=getWWSI();
+  return ledMode==2 || ledMode==3;
+}
+
+bool modeToW()
+{
+  return wheel.ledMode==1 || wheel.ledMode==2;
+}
+
+bool modeToWS()
+{
+  return wheel.ledMode==2 || wheel.ledMode==3;
 }
 
 void wswSwitch0(int eventWheel)
@@ -377,8 +395,9 @@ void wswSwitch0(int eventWheel)
   if(eventWheel==0 || eventWheel==1)
     return;
 
-  int wI=getWI();
-  int wsI=getWSI();
+  getWWSI();
+  int wI = modeToW();
+  int wsI = modeToWS();
   log("wswi0", wI, wsI);
 
   if(eventWheel==-1)
@@ -407,8 +426,9 @@ void wswSwitch1(int eventWheel)
   if(eventWheel==0 || eventWheel==1)
     return;
 
-  int wI=getWI();
-  int wsI=getWSI();
+  getWWSI();
+  int wI = modeToW();
+  int wsI = modeToWS();
   log("wswi1", wI, wsI);
 
   if(eventWheel==-1)

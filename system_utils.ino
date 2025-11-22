@@ -9,8 +9,10 @@ void selfTest()
 {
   int prevVent1=seat1.mode;
   int prevVent2=seat2.mode;
-  int prevW=getWI();
-  int prevWS=getWSI();
+  
+  getWWSI();
+  int prevW=modeToW();
+  int prevWS=modeToWS();
 
   seat1.mode=0;
   setVentilation(seat1);
@@ -26,7 +28,7 @@ void selfTest()
   //check wheel
   wClickBtn();
   delay(1000);
-  if(getWI())
+  if(modeToW())
   {
     setWheelIndicator(255);
     delay(2000);
@@ -57,7 +59,7 @@ void selfTest()
   //check wind shield
   wsClickBtn();
   delay(1000);
-  if(getWSI())
+  if(modeToWS())
   {
     setWheelIndicator(255);
     delay(2000);
