@@ -127,7 +127,7 @@ void loop()
     }
   }
   
-  if(!autoOnExecuted && millis()>1000*5)
+  if(!autoOnExecuted && millis()>1000)
   {
     autoOnExecuted=true;
     AutoOn();
@@ -353,13 +353,11 @@ void setWheelIndicator(int pwm)
 //Получить статус работы обогрева руля
 bool getWI()
 {
-  int value = analogRead(wheel.wIndicator);
-  wIndicator = value / middle + wIndicator / middle * (middle-1);
-  if(value>100)
-  {
-    wIndicator = 1024;
-  }
-  return wIndicator > 100;
+  int value=0;
+  for(int i=0; i<10; i++)//Получить усредненное значение шима
+   value += analogRead(wheel.wIndicator);
+  value = value / 10;
+  return value > 100;
 }
 
 //Получить статус работы обогрева лобаша
