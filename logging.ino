@@ -19,6 +19,13 @@ void log(String msg, int val)
   Serial.println(val);
 }
 
+void log(String msg, uint16_t val)
+{
+  if(!isDebug) return;
+  Serial.print(msg+": ");
+  Serial.println(val);
+}
+
 void log(String msg, int val, int val2)
 {
   if(!isDebug) return;
