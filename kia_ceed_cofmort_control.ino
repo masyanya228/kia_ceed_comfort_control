@@ -146,7 +146,7 @@ void loop()
     }
   }
   
-  if(!autoOnExecuted && millis()>1000)
+  if(!autoOnExecuted && millis()>100)
   {
     autoOnExecuted=true;
     AutoOn();
