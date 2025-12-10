@@ -46,6 +46,7 @@ bool IsNeedWSByTemp()
 //Управляет автоматическим включением вентиляции, обогрева руля и обогрева лобового стекла пи запуске авто.
 void AutoOn()
 {
+  getWWSI();
   log("Current vent1 mode", seat1.mode);
   if(seat1.mode==0 && IsNeedVentilationByTemp())
   {
