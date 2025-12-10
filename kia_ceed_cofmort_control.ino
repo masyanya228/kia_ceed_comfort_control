@@ -114,6 +114,8 @@ void loop()
 {
   if (Serial.available()) {
     String com = Serial.readString();
+    com.remove(com.length()-1);
+    log("Input com", com.length());
     if (com.startsWith("set_wi"))
     {
       setWheelIndicator(com.substring(6).toInt());
@@ -121,6 +123,26 @@ void loop()
     else if (com.startsWith("temp"))
     {
       log("temp", GetTemp());
+    }
+    else if (com=="w")
+    {
+      wClickBtn();
+      log("wheel switch");
+    }
+    else if (com=="ws")
+    {
+      wsClickBtn();
+      log("wind shield switch");
+    }
+    else if (com=="s1")
+    {
+      nextMode(&seat1);
+      log("seat1 click");
+    }
+    else if (com=="s2")
+    {
+      nextMode(&seat2);
+      log("seat2 click");
     }
   }
   
