@@ -589,19 +589,18 @@ void wellcome()
   delay(50);
   digitalWrite(seat1.midLed, HIGH);
   digitalWrite(seat2.midLed, HIGH);
-  delay(150);
+  delay(100);
   digitalWrite(seat1.highLed, HIGH);
   digitalWrite(seat2.highLed, HIGH);
-  delay(200);
+  delay(150);
   digitalWrite(seat1.highLed, LOW);
   digitalWrite(seat2.highLed, LOW);
-  delay(150);
+  delay(100);
   digitalWrite(seat1.midLed, LOW);
   digitalWrite(seat2.midLed, LOW);
   delay(50);
   digitalWrite(seat1.lowLed, LOW);
   digitalWrite(seat2.lowLed, LOW);
-  delay(200);
 }
 
 void BlinkBar(int val, int times, int pause)
