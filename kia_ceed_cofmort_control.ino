@@ -304,6 +304,18 @@ int getBtnEvent(Wheel* wheel)
   {
     wheel->btnPressCounter++;
     if(wheel->btnPressCounter==14){
+      if(getWI())
+      {
+        setWheelIndicator(0);
+        delay(40);
+        setWheelIndicator(255);
+        delay(40);
+        setWheelIndicator(0);
+        delay(40);
+        setWheelIndicator(255);
+        delay(40);
+        setWheelIndicator(0);
+      }
       return 2;
     }
     else if(wheel->btnPressCounter==1){
@@ -321,6 +333,10 @@ int getBtnEvent(Wheel* wheel)
   else if(wheel->btnPressCounter>0)
   {
     wheel->btnPressCounter=0;
+    if(wheel->ledMode==0)
+    {
+      setWheelIndicator(255);
+    }
     return -1;
   }
   else{
