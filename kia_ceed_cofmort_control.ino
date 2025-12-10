@@ -407,23 +407,11 @@ bool getWWSI()
 //Получить статус работы обогрева руля
 bool getWI()
 {
-  int ledMode=getWWSI();
-  return ledMode==1 || ledMode==2;
+  return wheel.ledMode==1 || wheel.ledMode==2;
 }
 
 //Получить статус работы обогрева лобаша
 bool getWSI()
-{
-  int ledMode=getWWSI();
-  return ledMode==2 || ledMode==3;
-}
-
-bool modeToW()
-{
-  return wheel.ledMode==1 || wheel.ledMode==2;
-}
-
-bool modeToWS()
 {
   return wheel.ledMode==2 || wheel.ledMode==3;
 }
@@ -434,8 +422,8 @@ void wswSwitch0(int eventWheel)
     return;
 
   getWWSI();
-  int wI = modeToW();
-  int wsI = modeToWS();
+  int wI = getWI();
+  int wsI = getWSI();
   log("wswi0", wI, wsI);
 
   if(eventWheel==-1)
@@ -465,8 +453,8 @@ void wswSwitch1(int eventWheel)
     return;
 
   getWWSI();
-  int wI = modeToW();
-  int wsI = modeToWS();
+  int wI = getWI();
+  int wsI = getWSI();
   log("wswi1", wI, wsI);
 
   if(eventWheel==-1)
