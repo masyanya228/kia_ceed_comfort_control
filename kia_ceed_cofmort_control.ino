@@ -91,8 +91,7 @@ struct Wheel{
 };
 Wheel wheel;
 
-void setup()
-{
+void setup(){
   SetupPins();
   dht22.begin();
   Serial.begin(9600);
@@ -110,8 +109,7 @@ void setup()
     wellcome();
 }
 
-void loop()
-{
+void loop(){
   if (Serial.available()) {
     String com = Serial.readString();
     com.remove(com.length()-1);
@@ -122,7 +120,7 @@ void loop()
     }
     else if (com.startsWith("temp"))
     {
-      log("temp", GetTemp());
+      log("temp", getTemp());
     }
     else if (com=="w")
     {
@@ -170,7 +168,7 @@ void loop()
     }
     if(event1==2)
     {
-      BlinkBar(12, 1, 100);
+      blinkBar(12, 1, 100);
       menu=1;
     }
   }
@@ -188,7 +186,7 @@ void loop()
     }
     if(event1==2)
     {
-      BlinkBar(12, 2, 100);
+      blinkBar(12, 2, 100);
       isMenuEdit=true;
       editValue=getValue(menu);
     }
@@ -199,7 +197,7 @@ void loop()
     {
       isMenuEdit=false;
       menu=0;
-      BlinkBar(12, 3, 100);
+      blinkBar(12, 3, 100);
       setIndicator(seat1);
       setIndicator(seat2);
     }
@@ -224,16 +222,16 @@ void loop()
     {
       isMenuEdit=false;
       saveValue(menu);
-      BlinkBar(12, 2, 100);
+      blinkBar(12, 2, 100);
     }
     if(event2==2)//dont save changes
     {
       if(menu==12)
       {
-        ShowTemp();
+        showTemp();
       }
       isMenuEdit=false;
-      BlinkBar(12, 3, 50);
+      blinkBar(12, 3, 50);
       setVentilation(seat1);
       setVentilation(seat2);
     }
@@ -260,8 +258,7 @@ void loop()
 Получить событие кнопки "Вентиляция"
 0-idle; 1-down; 2-long; -1-up
 */
-int getBtnEvent(Seat* seat)
-{
+int getBtnEvent(Seat* seat){
   int pinValue=analogRead(seat->btnPin);
 
   if(pinValue<500)
@@ -296,8 +293,7 @@ int getBtnEvent(Seat* seat)
 Получить событие кнопки "Обогрев руля"
 0-idle; 1-down; 2-long; -1-up
 */
-int getBtnEvent(Wheel* wheel)
-{
+int getBtnEvent(Wheel* wheel){
   int pinValue=analogRead(wheel->btn);
 
   if(pinValue<500)
@@ -345,8 +341,7 @@ int getBtnEvent(Wheel* wheel)
 }
 
 //Расчет анимации индикатора на кнопке "Обогрев руля"
-void setWheelIndicator()
-{
+void setWheelIndicator(){
   //0-idle; 1-w; 2-ws; 3-s
   getWWSI();
 
@@ -367,14 +362,12 @@ void setWheelIndicator()
 }
 
 //Установить индикатор на кнопке "Обогрев руля"
-void setWheelIndicator(int pwm)
-{
+void setWheelIndicator(int pwm){
   analogWrite(wheel.led, pwm);
 }
 
 //Получить статус работы обогрева руля
-bool getWWSI()
-{
+bool getWWSI(){
   int wiVal=0;
   int wsiVal=0;
   for(int i=0; i<10; i++)//Получить усредненное значение шима
@@ -405,19 +398,17 @@ bool getWWSI()
 }
 
 //Получить статус работы обогрева руля
-bool getWI()
-{
+bool getWI(){
   return wheel.ledMode==1 || wheel.ledMode==2;
 }
 
 //Получить статус работы обогрева лобаша
-bool getWSI()
-{
+bool getWSI(){
   return wheel.ledMode==2 || wheel.ledMode==3;
 }
 
-void wswSwitch0(int eventWheel)
-{
+//1-ой алгоритм кнопки руля
+void wswSwitch0(int eventWheel){
   if(eventWheel==0 || eventWheel==1)
     return;
 
@@ -447,8 +438,8 @@ void wswSwitch0(int eventWheel)
   memoryMode(&wheel);
 }
 
-void wswSwitch1(int eventWheel)
-{
+//2-ой алгоритм кнопки руля
+void wswSwitch1(int eventWheel){
   if(eventWheel==0 || eventWheel==1)
     return;
 
@@ -496,22 +487,22 @@ void wswSwitch1(int eventWheel)
   memoryMode(&wheel);
 }
 
-void wClickBtn()
-{
+//Имитировать кнопку руля
+void wClickBtn(){
   digitalWrite(wheel.wSignal, HIGH);
   delay(150);
   digitalWrite(wheel.wSignal, LOW);
 }
 
-void wsClickBtn()
-{
+//Имитировать кнопку лобаша
+void wsClickBtn(){
   digitalWrite(wheel.wsSignal, HIGH);
   delay(150);
   digitalWrite(wheel.wsSignal, LOW);
 }
 
-void w_wsClickBtn()
-{
+//Имитировать кнопки руль и лобаш
+void w_wsClickBtn(){
   digitalWrite(wheel.wSignal, HIGH);
   digitalWrite(wheel.wsSignal, HIGH);
   delay(150);
@@ -519,8 +510,8 @@ void w_wsClickBtn()
   digitalWrite(wheel.wsSignal, LOW);
 }
 
-void nextMode(Seat* seat)
-{
+//Переключить вентиляцию
+void nextMode(Seat* seat){
   seat->mode--;
   if(seat->mode<0)
     seat->mode=3;
@@ -528,21 +519,21 @@ void nextMode(Seat* seat)
   memoryMode(seat);
 }
 
-void setVentilation(Seat seat)
-{
+//Обновить состояние вентиляции
+void setVentilation(Seat seat){
   setIndicator(seat);
   setFan(seat);
 }
 
-void setIndicator(Seat seat)
-{
+//Обновить индикатор вентиляции
+void setIndicator(Seat seat){
   digitalWrite(seat.lowLed, (int)(seat.mode>0));
   digitalWrite(seat.midLed, (int)(seat.mode>1));
   digitalWrite(seat.highLed, (int)(seat.mode>2));
 }
 
-void setFan(Seat seat)
-{
+//Обновить скорость вентиляции
+void setFan(Seat seat){
   int speed=0;
   if(seat.mode==0)
   {
@@ -563,9 +554,19 @@ void setFan(Seat seat)
   analogWrite(seat.fanPwmPin, speed);
 }
 
+//Моргание баром
+void blinkBar(int val, int times, int pause){
+  for (int i=0; i<times; i++)
+  {
+    delay(pause);
+    setBar(val);
+    delay(pause);
+    setBar(0);
+  }
+}
+
 //0-12; Each odd value gets blinking
-void setBar(int bar)
-{
+void setBar(int bar){
   digitalWrite(seat1.lowLed, ((bar==1 & menuQuartz<10==0)|(bar>1))?HIGH:LOW);
   digitalWrite(seat1.midLed, ((bar==3 & menuQuartz<10==0)|(bar>3))?HIGH:LOW);
   digitalWrite(seat1.highLed, ((bar==5 & menuQuartz<10==0)|(bar>5))?HIGH:LOW);
@@ -575,8 +576,7 @@ void setBar(int bar)
 }
 
 //Приветствие
-void wellcome()
-{
+void wellcome(){
   digitalWrite(seat1.lowLed, LOW);
   digitalWrite(seat1.midLed, LOW);
   digitalWrite(seat1.highLed, LOW);
@@ -601,15 +601,4 @@ void wellcome()
   delay(50);
   digitalWrite(seat1.lowLed, LOW);
   digitalWrite(seat2.lowLed, LOW);
-}
-
-void BlinkBar(int val, int times, int pause)
-{
-  for (int i=0; i<times; i++)
-  {
-    delay(pause);
-    setBar(val);
-    delay(pause);
-    setBar(0);
-  }
 }

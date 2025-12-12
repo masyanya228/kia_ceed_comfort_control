@@ -23,7 +23,7 @@ void selfTest()
   if(prevWS)
     wsClickBtn();
   
-  BlinkBar(12, 3, 1000);
+  blinkBar(12, 3, 1000);
   
   //check wheel
   wClickBtn();
@@ -146,7 +146,7 @@ void selfTest()
   setVentilation(seat2);
   delay(6000);
   
-  ShowTemp();
+  showTemp();
 
   //Set as before
   seat1.mode=prevVent1;
@@ -160,31 +160,31 @@ void selfTest()
 }
 
 //Показывает текущую температуру в полу салона
-void ShowTemp()
+void showTemp()
 {
-  int curTemp = GetTemp();
+  int curTemp = getTemp();
   if(curTemp < 0)
   {
     //left LED
-    BlinkBar(2, 1, 1000);
+    blinkBar(2, 1, 1000);
   }
   else
   {
     //right LED
-    BlinkBar(12, 1, 1000);
+    blinkBar(12, 1, 1000);
   }
 
   delay(1000);
   int firstDigit=curTemp/10;
-  BlinkBar(firstDigit*2, 1, 1000);
+  blinkBar(firstDigit*2, 1, 1000);
 
   delay(1000);
   int lastDigit=curTemp-firstDigit*10;
-  BlinkBar(lastDigit, 1, 1000);
+  blinkBar(lastDigit, 1, 1000);
 }
 
 //Возвращает текущую температура с встроенного датчика
-int GetTemp()
+int getTemp()
 {
   return dht22.readTemperature();
 }

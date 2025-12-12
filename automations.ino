@@ -6,8 +6,8 @@ bool IsNeedVentilationByTemp()
   log("autoVentilation", memory.autoVentilation);
   if(memory.autoVentilation == clamp(memory.autoVentilation, 1, 12))
   {
-    log("temp target/real", (12 + memory.autoVentilation*2), GetTemp());
-    return (12 + memory.autoVentilation*2) < GetTemp();
+    log("temp target/real", (12 + memory.autoVentilation*2), getTemp());
+    return (12 + memory.autoVentilation*2) < getTemp();
   }
   else
     return false;
@@ -21,8 +21,8 @@ bool IsNeedWByTemp()
   log("autoWheel", memory.autoWheel);
   if(memory.autoWheel == clamp(memory.autoWheel, 1, 12))
   {
-    log("temp target/real", (14 + memory.autoWheel*-2), GetTemp());
-    return (14 + memory.autoWheel*-2) > GetTemp();
+    log("temp target/real", (14 + memory.autoWheel*-2), getTemp());
+    return (14 + memory.autoWheel*-2) > getTemp();
   }
   else
     return false;
@@ -36,8 +36,8 @@ bool IsNeedWSByTemp()
   log("autoWindShield", memory.autoWindShield);
   if(memory.autoWindShield == clamp(memory.autoWindShield, 1, 12))
   {
-    log("temp target/real", (0 + memory.autoWindShield*-1), GetTemp());
-    return (0 + memory.autoWindShield*-1) > GetTemp();
+    log("temp target/real", (0 + memory.autoWindShield*-1), getTemp());
+    return (0 + memory.autoWindShield*-1) > getTemp();
   }
   else
     return false;
@@ -51,7 +51,7 @@ void AutoOn()
   if(seat1.mode==0 && IsNeedVentilationByTemp())
   {
     seat1.mode=1;
-    log("vent1 auto ON: mode 1", GetTemp());
+    log("vent1 auto ON: mode 1", getTemp());
     setVentilation(seat1);
   }
   else if(seat1.mode==0 && memory.ventilationStateMemory)
@@ -64,7 +64,7 @@ void AutoOn()
   log("Current wheel mode", getWI());
   if(!getWI() && IsNeedWByTemp())
   {
-    log("wheel auto ON", GetTemp());
+    log("wheel auto ON", getTemp());
     wClickBtn();
   }
   else if(!getWI() && memory.wStateMemory && memory.wState==1)
@@ -76,7 +76,7 @@ void AutoOn()
   log("Current wind shield mode", getWSI());
   if(!getWSI() && IsNeedWSByTemp())
   {
-    log("wind shield auto ON", GetTemp());
+    log("wind shield auto ON", getTemp());
     wsClickBtn();
   }
   else if(!getWSI() && memory.wsStateMemory && memory.wsState==1)
